@@ -1,11 +1,10 @@
 <replacement>
     <!--<backgroundColor>
-        <colorReplace>#2E2F32</colorReplace>
-    </backgroundColor>-->
-    <backgroundColor>
         <colorReplace>#4D4F55</colorReplace>
-    </backgroundColor>
+        <colorValue>#F1F1F1</colorValue>
+    </backgroundColor>-->
     <textColor>
+        <!--<colorValue>#00FF00</colorValue>-->
         <colorReplace>#FFFFFF</colorReplace>
     </textColor>
     <output>./output/</output>

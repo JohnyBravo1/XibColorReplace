@@ -12,6 +12,9 @@ var args = mod_args.args;
  * 
    <replacement>
         <backgroundColor>
+            <colorReplace>#FF00FF</colorReplace>
+        </backgroundColor>
+        <backgroundColor>
             <colorReplace>#2E2F32</colorReplace>
             <colorValue>#0000FF</colorValue>
         </backgroundColor>
@@ -19,9 +22,6 @@ var args = mod_args.args;
             <colorReplace>#00FF00</colorReplace>
             <colorValue>#FF0000</colorValue>
         </textColor>
-        <backgroundColor>
-            <colorReplace>#FF00FF</colorReplace>
-        </backgroundColor>
         <output>
             ./output/
         </output>
@@ -100,7 +100,6 @@ class Template {
 
         this.replacement.forEach((r, rIndex) => {
 
-            console.log(r.colorKey);
             viewInstance.replace(r.colorKey, r.colorValue, r.replaceColorValue);
             viewInstance.commit(xibInstance, this.outputPath);
         });
@@ -114,7 +113,7 @@ var replaceColorValue = args.argument(3);
 var replaceColorWithValue = args.argument(4);
 var templatePath = args.fileArgument(undefined, ".xml");
 
-if (args.argsLength < 3 || args.argsLength == 3 && templatePath === undefined) {
+if (args.argsLength < 2 || args.argsLength == 2 && templatePath === undefined) {
 
     printUsage();
     process.exit(0);
@@ -194,12 +193,20 @@ function replace(colorKey, colorValue, replaceValue) {
 
             this.colors[colorKey].hexColor = replaceValue;
 
-            this.replaced = new Array();
+            this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
             var replacement = new Object();
 
             replacement[colorKey] = replaceValue;
             this.replaced[this.replaced.length] = replacement;
         }
+    }
+    else if (colorValue === undefined) {
+
+        this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+        var replacement = new Object();
+
+        replacement[colorKey] = replaceValue;
+        this.replaced[this.replaced.length] = replacement;
     }
     if (this.subviews !== undefined) {
 
@@ -228,23 +235,42 @@ function replaceXibColors(xibInstance, replacement) {
     }
     if (xibView.color !== undefined) {
 
-        xibView.color.forEach((xibViewColor, colorIndex) => {
+        var colorKeys = Object.keys(this.colors);
+        if (colorKeys.indexOf(replacementColorKey) !== -1) {
 
-            var colorKey = xibViewColor['$']['key'];
-            if (colorKey == replacementColorKey) {
+            xibView.color.forEach((xibViewColor, colorIndex) => {
 
-                delete xibViewColor['$'].white;
-                delete xibViewColor['$'].cocoaTouchSystemColor;
+                var colorKey = xibViewColor['$']['key'];
+                if (colorKey == replacementColorKey) {
 
-                xibViewColor['$'].colorSpace = "calibratedRGB";
-                xibViewColor['$'].alpha = 1;
-                xibViewColor['$'].blue = b;
-                xibViewColor['$'].green = g;
-                xibViewColor['$'].red = r;
-                
-                console.log("replaced " + colorKey + " in " + this.xibName + " with: " + rgb + "/" + replacement[replacementColorKey]);
-            }
-        });
+                    delete xibViewColor['$'].white;
+                    delete xibViewColor['$'].cocoaTouchSystemColor;
+
+                    xibViewColor['$'].colorSpace = "calibratedRGB";
+                    xibViewColor['$'].alpha = 1;
+                    xibViewColor['$'].blue = b;
+                    xibViewColor['$'].green = g;
+                    xibViewColor['$'].red = r;
+                    
+                    console.log("replaced " + colorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey]);
+                }
+            });
+        }
+        else {
+
+            var colorObject = new Object();
+
+            colorObject['$'] = new Object();
+
+            colorObject['$'].colorSpace = "calibratedRGB";
+            colorObject['$'].alpha = "1";
+            colorObject['$'].blue = b;
+            colorObject['$'].green = g;
+            colorObject['$'].red = r;
+
+            xibView.color[0][replacementColorKey] = colorObject;
+            console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey]);
+        }
     }
 }
 
@@ -273,7 +299,7 @@ mod_nibs.UIView.prototype.viewFromXibInstance = viewFromXibInstance;
 
 function printUsage() {
 
-    console.log("usage: ColorReplace [workingPath] [outputPath] [template|replaceColorKey|replaceColorValue|replaceColorWithValue]");
+    console.log("usage: ColorReplace [workingPath] [template|outputPath] [template|replaceColorKey|replaceColorValue|replaceColorWithValue]");
     console.log("replaces colorkeys if found within the xib files that match the color values to the new color values");
     console.log("workingPath - the directory / file to work with containing xib files");
     console.log("outputPath - the output directory of the replaced interfaces");
