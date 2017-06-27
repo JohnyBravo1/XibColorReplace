@@ -1,32 +1,11 @@
 var mod_args = require('./args');
 var mod_dir = require('./../dir');
 var mod_fs = require('fs');
+var mod_hexRGB = require('hex-rgb');
 var mod_nibs = require('./nibs');
 var mod_xml2js = require('xml2js');
-var mod_hexRGB = require('hex-rgb');
 
 var args = mod_args.args;
-
-/**
- * example of a xml template for replacing colors:
- * 
-   <replacement>
-        <backgroundColor>
-            <colorReplace>#FF00FF</colorReplace>
-        </backgroundColor>
-        <backgroundColor>
-            <colorReplace>#2E2F32</colorReplace>
-            <colorValue>#0000FF</colorValue>
-        </backgroundColor>
-        <textColor>
-            <colorReplace>#00FF00</colorReplace>
-            <colorValue>#FF0000</colorValue>
-        </textColor>
-        <output>
-            ./output/
-        </output>
-    </replacement>
- */
 class Template {
 
     /**
@@ -47,18 +26,44 @@ class Template {
             this.outputPath = outputPath;
             this.addReplacement(replaceColorKey, replaceColorValue, replaceColorWithValue);
         }
+        this.createOutputIfNotExist();
+        console.log("OUTPUT SET TO: [ " + this.outputPath + " ]");
+        console.log("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+    }
+
+    createOutputIfNotExist() {
+
+        if (!mod_fs.existsSync(this.outputPath)) {
+            
+            mod_fs.mkdir(this.outputPath, (error) => {
+
+                if (error != null) {
+
+                    console.log(error);
+                    process.exit(0);
+                } 
+            });
+        }
     }
 
     /**
      * adds a color replacement description
      * 
-     * @param
+     * @param replaceColorKey
+     * @param replaceColorValue
+     * @param state
+     * @param stateTitle
+     * @param viewType
      */
-    addReplacement(replaceColorKey, replaceColorValue, replaceColorWithValue) {
+    addReplacement(replaceColorKey, replaceColorValue, replaceColorWithValue, state, stateTitle, viewType) {
 
         var replacementDescriptor = { colorKey: replaceColorKey, 
                                     colorValue: replaceColorValue,
                              replaceColorValue: replaceColorWithValue };
+
+        if (state !== undefined ) replacementDescriptor.state = state;
+        if (stateTitle !== undefined) replacementDescriptor.stateTitle = stateTitle;
+        if (viewType !== undefined) replacementDescriptor.viewType = viewType;
 
         this.replacement = (this.replacement === undefined ? new Array() : this.replacement);
         this.replacement[this.replacement.length] = replacementDescriptor;
@@ -75,8 +80,6 @@ class Template {
         xmlParser.parseString(templateXMLString, (err, templateXMLInstance) => {
 
             if (err != null || err != undefined) {
-
-                console.log(err);
                 return;
             }
 
@@ -89,10 +92,20 @@ class Template {
 
                     var colorValue = (replacement.colorValue !== undefined ? replacement.colorValue[0] : undefined);
                     var colorReplace = (replacement.colorReplace !== undefined ? replacement.colorReplace[0] : undefined);
-                    this.addReplacement(replacementKey, colorValue, colorReplace);
+                    var state = (replacement.state !== undefined ? replacement.state[0] : undefined);
+                    var stateTitle = (replacement.title !== undefined ? replacement.title[0] : undefined);
+                    var viewType = (replacement.viewType !== undefined ? replacement.viewType[0] : undefined);
+
+                    this.addReplacement(replacementKey, colorValue, colorReplace, state, stateTitle, viewType);
                 });
             });
-            this.outputPath = templateXMLInstance.replacement.output[0];
+            this.inputPath = mod_dir.FilePath.specialPath(templateXMLInstance.replacement.input[0]);
+            this.outputPath = mod_dir.FilePath.specialPath(templateXMLInstance.replacement.output[0]);
+
+            if (!mod_fs.existsSync(this.inputPath)) {
+
+                console.log("Invalid input specified in template: " + this.inputPath);
+            }
         });
     }
 
@@ -100,9 +113,9 @@ class Template {
 
         this.replacement.forEach((r, rIndex) => {
 
-            viewInstance.replace(r.colorKey, r.colorValue, r.replaceColorValue);
-            viewInstance.commit(xibInstance, this.outputPath);
+            viewInstance.replace(r.colorKey, r.colorValue, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
         });
+        viewInstance.commit(xibInstance, this.outputPath);
     }
 }
 
@@ -111,9 +124,9 @@ var outputPath = args.argument(1);
 var replaceColorKey = args.argumentWithin(mod_nibs.colorKeys, true);
 var replaceColorValue = args.argument(3);
 var replaceColorWithValue = args.argument(4);
-var templatePath = args.fileArgument(undefined, ".xml");
+var templatePath = args.fileArgument(undefined, [ ".template", ".xml" ]);
 
-if (args.argsLength < 2 || args.argsLength == 2 && templatePath === undefined) {
+if (args.argsLength < 1 || args.argsLength == 1 && templatePath === undefined) {
 
     printUsage();
     process.exit(0);
@@ -128,6 +141,8 @@ if (replaceColorWithValue === undefined) {
 function commit(xibInstance, outputPath) {
 
     if (!this.hasChanges()) return;
+
+    this.willCommit(xibInstance);
     
     if (this.replaced !== undefined) {
 
@@ -136,11 +151,7 @@ function commit(xibInstance, outputPath) {
             var replacementKeys = Object.keys(replacement);
 
             replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
-
-                if (this.colors !== undefined && this.colors[replacementKey] !== undefined) {
-
-                    this.replaceXibColors(xibInstance, replacement);
-                }
+                this.replaceXibColors(xibInstance, replacement);
             });
         });
     }
@@ -152,150 +163,24 @@ function commit(xibInstance, outputPath) {
     }
     //only write changes made from the parent view instance
     if (this.xmlPath.indexOf("subview") === -1) {
-
+        
         var outputPathStat = mod_fs.statSync(outputPath);
 
         if (outputPathStat.isDirectory()) outputPath += "/" + this.xibName;
 
         var builder = new mod_xml2js.Builder();
         var xml = builder.buildObject(xibInstance).toString();
+
         mod_fs.writeFile(outputPath, xml, (err) => {
 
             if (err !== null) console.log(err);
         });
     }
-}
 
-function hasChanges() {
-
-    var hasChanges = (this.replaced !== undefined);
-
-    if (!hasChanges && this.subviews !== undefined) {
-
-        var subview = undefined;
-        for (var subviewIndex = 0; subviewIndex < this.subviews.length; subviewIndex++) {
-
-            subview = this.subviews[subviewIndex];
-            hasChanges = subview.hasChanges();
-
-            if (hasChanges) break;
-        }
-    }
-
-    return (hasChanges);
-}
-
-function replace(colorKey, colorValue, replaceValue) {
-
-    if (this.colors !== undefined && this.colors[colorKey] !== undefined) {
-
-        if (colorValue === undefined || this.colors[colorKey].hexColor == colorValue) {
-
-            this.colors[colorKey].hexColor = replaceValue;
-
-            this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
-            var replacement = new Object();
-
-            replacement[colorKey] = replaceValue;
-            this.replaced[this.replaced.length] = replacement;
-        }
-    }
-    else if (colorValue === undefined) {
-
-        this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
-        var replacement = new Object();
-
-        replacement[colorKey] = replaceValue;
-        this.replaced[this.replaced.length] = replacement;
-    }
-    if (this.subviews !== undefined) {
-
-        this.subviews.forEach((subview, subviewIndex) => {
-
-            subview.replace(colorKey, colorValue, replaceValue);
-        });
-    }
-}
-
-function replaceXibColors(xibInstance, replacement) {
-
-    var replacementColorKey = Object.keys(replacement)[0];
-    var rgb = mod_hexRGB(replacement[replacementColorKey]);
-
-    var r = (rgb[0] / 255);
-    var g = (rgb[1] / 255);
-    var b = (rgb[2] / 255);
-
-    var xibView = this.viewFromXibInstance(xibInstance);
-
-    if (xibView === undefined) {
-
-        console.log("something wrong for [" + this.xmlPath + "]");
-        return;
-    }
-    if (xibView.color !== undefined) {
-
-        var colorKeys = Object.keys(this.colors);
-        if (colorKeys.indexOf(replacementColorKey) !== -1) {
-
-            xibView.color.forEach((xibViewColor, colorIndex) => {
-
-                var colorKey = xibViewColor['$']['key'];
-                if (colorKey == replacementColorKey) {
-
-                    delete xibViewColor['$'].white;
-                    delete xibViewColor['$'].cocoaTouchSystemColor;
-
-                    xibViewColor['$'].colorSpace = "calibratedRGB";
-                    xibViewColor['$'].alpha = 1;
-                    xibViewColor['$'].blue = b;
-                    xibViewColor['$'].green = g;
-                    xibViewColor['$'].red = r;
-                    
-                    console.log("replaced " + colorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey]);
-                }
-            });
-        }
-        else {
-
-            var colorObject = new Object();
-
-            colorObject['$'] = new Object();
-
-            colorObject['$'].colorSpace = "calibratedRGB";
-            colorObject['$'].alpha = "1";
-            colorObject['$'].blue = b;
-            colorObject['$'].green = g;
-            colorObject['$'].red = r;
-
-            xibView.color[0][replacementColorKey] = colorObject;
-            console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey]);
-        }
-    }
-}
-
-function viewFromXibInstance(xibInstance) {
-
-    var split = this.xmlPath.split(".");
-    var xibView = xibInstance;
-
-    split.forEach((pathComponent, pathIndex) => {
-
-        if (xibView == undefined || xibView == null) {
-
-            return;
-        }
-        xibView = xibView[pathComponent];
-    });
-
-    return (xibView);
+    return (xibInstance);
 }
 
 mod_nibs.UIView.prototype.commit = commit;
-mod_nibs.UIView.prototype.hasChanges = hasChanges;
-mod_nibs.UIView.prototype.replace = replace;
-mod_nibs.UIView.prototype.replaceXibColors = replaceXibColors;
-mod_nibs.UIView.prototype.viewFromXibInstance = viewFromXibInstance;
 
 function printUsage() {
 
@@ -319,7 +204,13 @@ if (!mod_fs.existsSync(workPath)) {
 var stat = mod_fs.statSync(workPath);
 var template = undefined;
 
-if (templatePath !== undefined) template = new Template(templatePath);
+if (templatePath !== undefined) {
+
+    if (workPath == templatePath) {
+        template = new Template(templatePath);
+        workPath = template.inputPath;
+    }
+} 
 else template = new Template(undefined, replaceColorKey, replaceColorValue, replaceColorWithValue, outputPath);
 
 if (stat.isDirectory()) {
@@ -354,9 +245,8 @@ function processXib(xib) {
                 objKeys.forEach((key, index) => {
 
                     var viewInstance = mod_nibs.viewInstance(key, objcs[key][0], xib);
-
                     if (viewInstance !== undefined) {
-
+                        
                         template.replace(xibInstance, viewInstance);
                     }
                 });

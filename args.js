@@ -57,7 +57,20 @@ class Args {
             
             fileArg = this.args[index];
             if (extension !== undefined) {
-                if (fileArg.indexOf(extension) !== -1) {
+
+                if (extension instanceof Array) {
+
+                    var isOneOf = false;
+                    console.log(extension);
+                    extension.forEach((ext, extIndex) => {
+                        if (fileArg.indexOf(ext) !== -1) {
+                            isOneOf = true;
+                        }
+                    });
+
+                    if (isOneOf) break;
+                }
+                else if (fileArg.indexOf(extension) !== -1) {
                     break;
                 }
             }

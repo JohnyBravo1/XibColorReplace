@@ -1,18 +1,19 @@
 var mod_dir = require('./../dir');
 var mod_fs = require('fs');
+var mod_hexRGB = require('hex-rgb');
 var mod_plist = require('plist');
 var mod_utils = require('./utils.js');
 
-var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 
-                'sectionIndexColor', 'sectionIndexTrackingBackgroundColor', 'separatorColor',
-                 'shadowColor', 'switch', 'textColor', 'tintColor' ];
-var mod_viewKeys = [ 'activityIndicatorView', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
-                'imageView', 'label', 'tableView', 'tableViewCell', 'textfield', 'toolbar', 'scrollView', 'searchBar', 'segmentedControl',
-                 'view' ];
-var mod_viewTypes = [ "UIActivityIndicatorView", "UIButton", "UICollectionView",
-                "UICollectionView", "UIImageView", "UILabel", "UIScrollView", 
-                "UISearchBar", "UISegmentedControl", "UISwitch", "UITableView", "UITableViewCell", "UITextField",
-                "UIToolbar", "UIView" ];
+var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 
+                    'sectionIndexTrackingBackgroundColor', 'separatorColor', 'shadowColor', 'switch', 'textColor', 'tintColor' ];
+var mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
+                    'datePicker', 'imageView', 'label', 'navigationBar', 'navigationItem', 'pickerView', 'scrollView', 'searchBar', 
+                    'segmentedControl', 'stepper', 'switch', 'tabBar', 'tabBarItem', 'tableView', 'tableViewCell', 'textField', 'textView', 
+                    'toolbar', 'view' ];
+var mod_viewTypes = [ "UIActivityIndicatorView", "UIBarButtonItem", "UIButton", "UICollectionView", "UICollectionViewCell", "UIDatePicker", 
+                    "UIImageView", "UILabel", "UINavigationBar", "UINavigationItem", "UIPickerView", "UIScrollView", "UISearchBar", 
+                    "UISegmentedControl", "UIStepper", "UISwitch", "UITabBar", "UITabBarItem", "UITableView", "UITableViewCell", "UITextField", 
+                    "UITextView", "UIToolbar", "UIView" ];
 
 class UIView {
 
@@ -28,6 +29,27 @@ class UIView {
             return;
         }
         this.parseView(xibObject, viewKey);
+    }
+
+    willCommit(xibInstance) {  }
+
+    hasChanges() {
+
+        var hasChanges = (this.replaced !== undefined);
+
+        if (!hasChanges && this.subviews !== undefined) {
+
+            var subview = undefined;
+            for (var subviewIndex = 0; subviewIndex < this.subviews.length; subviewIndex++) {
+
+                subview = this.subviews[subviewIndex];
+                hasChanges = subview.hasChanges();
+
+                if (hasChanges) break;
+            }
+        }
+
+        return (hasChanges);
     }
 
     /**
@@ -77,6 +99,14 @@ class UIView {
                     subviewInstances[subviewInstances.length] = subviewInstance;
                 });
             }
+            if (element.barButtonItem !== undefined) {
+
+                parsed = true;
+                element.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
+                    subviewInstance = new UIBarButtonItem(barButtonItem);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
             if (element.button !== undefined) {
 
                 parsed = true;
@@ -109,6 +139,14 @@ class UIView {
                     subviewInstances[subviewInstances.length] = subviewInstance;
                 });
             }
+            if (element.datePicker !== undefined) {
+
+                parsed = true;
+                element.datePicker.forEach((datePicker, datePickerIndex) => {
+                    subviewInstance = new UIDatePicker(datePicker);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
             if (element.imageView !== undefined) {
 
                 parsed = true;
@@ -122,6 +160,31 @@ class UIView {
                 parsed = true;
                 element.label.forEach((label, labelIndex) => {
                     subviewInstance = new UILabel(label);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
+            if (element.navigationBar !== undefined) {
+
+                parsed = true;
+                element.navigationBar.forEach((navigationBar, navigationBarIndex) => {
+
+                    subviewInstance = new UINavigationBar(navigationBar);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
+            if (element.navigationItem !== undefined) {
+
+                parsed = true;
+                element.navigationItem.forEach((navigationItem, navigationItemIndex) => {
+                    subviewInstance = new UINavigationItem(navigationItem);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
+            if (element.pickerView !== undefined) {
+
+                parsed = true;
+                element.pickerView.forEach((pickerView, pickerViewIndex) => {
+                    subviewInstance = new UIPickerView(pickerView);
                     subviewInstances[subviewInstances.length] = subviewInstance;
                 });
             }
@@ -149,13 +212,45 @@ class UIView {
                     subviewInstances[subviewInstances.length] = subviewInstance;
                 });
             }
+            if (element.stepper !== undefined) {
+
+                parsed = true;
+                element.stepper.forEach((stepper, stepperIndex) => {
+                    subviewInstance = new UIStepper(stepper);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
             if (element.switch !== undefined) {
 
                 parsed = true;
                 element.switch.forEach((swtch, swtchIndex) => {
                     subviewInstance = new UISwitch(swtch);
                     subviewInstances[subviewInstances.length] = subviewInstance;
-                })
+                });
+            }
+            if (element.tabBar !== undefined) {
+
+                parsed = true;
+                element.tabBar.forEach((tabBar, tabBarIndex) => {
+                    subviewInstance = new UITabBar(tabBar);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
+            if (element.tabBarItem !== undefined) {
+
+                parsed = true;
+                element.tabBarItem.forEach((tabBarItem, tabBarItemIndex) => {
+                    subviewInstance = new UITabBarItem(tabBarItem);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
+            }
+            if (element.tableView !== undefined) {
+
+                parsed = true;
+                element.tableView.forEach((tableView, tableViewIndex) => {
+                    subviewInstance = new UITableView(tableView);
+                    subviewInstances[subviewInstances.length] = subviewInstance;
+                });
             }
             if (element.textField !== undefined) {
 
@@ -165,11 +260,11 @@ class UIView {
                     subviewInstances[subviewInstances.length] = subviewInstance;
                 });
             }
-            if (element.tableView !== undefined) {
+            if (element.textView !== undefined) {
 
                 parsed = true;
-                element.tableView.forEach((tableView, tableViewIndex) => {
-                    subviewInstance = new UITableView(tableView);
+                element.textView.forEach((textView, textViewIndex) => {
+                    subviewInstance = new UITextView(textView);
                     subviewInstances[subviewInstances.length] = subviewInstance;
                 });
             }
@@ -204,12 +299,13 @@ class UIView {
     parseView(xibObject, viewKey) {
 
         this.className = (xibObject['$']['customClass'] == undefined ? "UIView" : xibObject['$']['customClass']);
-        this.viewKey = (viewKey === undefined ? "view" : viewKey);
+        this.viewKey = (viewKey === undefined ? this.viewKeyString() : viewKey);
         this.viewType = "UIView";
         this.xibName = this.className + ".xib";
         this.xmlPath = "document.objects.0." + this.viewKeyString() + ".0";
 
         if (xibObject.color !== undefined) {
+
 
             xibObject.color.forEach((color, colorIndex) =>  {
 
@@ -231,12 +327,22 @@ class UIView {
      * 
      * @param rgba - normalized json structure of the rgb values to set for the given color key.
      * @param colorKey - key of this color attribute (ex. backgroundColor, tintColor...)
+     * @param hexValue - hex color code to use instead of rgba if not specified
      */
-    makeColor(rgba, colorKey) {
+    makeColor(rgba, colorKey, hexString) {
 
-        var hexString = "";
+        if (hexString !== undefined) {
 
-        if (rgba.w != 0) {
+            var rgb = mod_hexRGB(hexString);
+            rgba = new Object();
+
+            rgba.a = 1;
+            rgba.r = rgb[0];
+            rgba.g = rgb[1];
+            rgba.b = rgb[2];
+        }
+
+        if (rgba.w !== undefined && rgba.w != 0) {
 
             var wHex = mod_utils.toHex(rgba.w, 2);
             hexString = "#" + wHex + wHex + wHex;
@@ -347,13 +453,215 @@ class UIView {
 
         return (viewJSON);
     }
+
+    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+
+        var canReplace = (viewType === undefined || viewType === this.viewType);
+
+        // replace any previous populated replacements if this replacement overrides the previous ones
+        if (canReplace) {
+            var replaceLength = (this.replaced !== undefined ? this.replaced.length : 0);
+            for (var replaceIndex = 0; replaceIndex < replaceLength; replaceIndex++) {
+                if (this.replaced[replaceIndex][colorKey] !== undefined && 
+                    (colorValue === undefined || this.replaced[replaceIndex][colorKey].value == colorValue)) {
+                    this.replaced[replaceIndex][colorKey].value = replaceValue;
+                    console.log(("replaced a replacement for " + colorKey + " in " + this.viewType).toUpperCase());
+                    canReplace = false;
+                }
+            }
+        }
+        if (canReplace && this.colors !== undefined && this.colors[colorKey] !== undefined) {
+
+            if (colorValue === undefined || this.colors[colorKey].hexColor == colorValue) {
+
+                this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+                var replacement = new Object();
+
+                replacement[colorKey] = new Object();
+                if (state !== undefined) replacement[colorKey].state = state;
+                if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
+                replacement[colorKey].value = replaceValue;
+
+                this.replaced[this.replaced.length] = replacement;
+            }
+        }
+        else if (canReplace && colorValue === undefined) {
+
+            if (this.canInsertColorKey(colorKey)) {
+
+                this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+                var replacement = new Object();
+
+                replacement[colorKey] = new Object();
+                if (state !== undefined) replacement[colorKey].state = state;
+                if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
+
+                replacement[colorKey].value = replaceValue;
+
+                this.replaced[this.replaced.length] = replacement;
+                this.makeColor(undefined, colorKey, replaceValue);
+            }
+        }
+        if (this.subviews !== undefined) {
+
+            this.subviews.forEach((subview, subviewIndex) => {
+                subview.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+            });
+        }
+    }
+    
+    replaceXibColors(xibInstance, replacement) {
+
+        var replacementColorKey = Object.keys(replacement)[0];
+        
+        var createColor = true;
+        var xibView = this.viewFromXibInstance(xibInstance);
+
+        if (xibView === undefined) {
+
+            console.log("something wrong for [" + this.xmlPath + "]");
+            return;
+        }
+        var rgb = mod_hexRGB(replacement[replacementColorKey].value);
+
+        var r = (rgb[0] / 255);
+        var g = (rgb[1] / 255);
+        var b = (rgb[2] / 255);
+        if (xibView.color !== undefined) {
+
+            for (var colorIndex = 0; colorIndex < xibView.color.length; colorIndex++) {
+
+                var colorKey = xibView.color[colorIndex]['$']['key'];
+                if (colorKey == replacementColorKey) {
+
+                    delete xibView.color[colorIndex]['$'].white;
+                    delete xibView.color[colorIndex]['$'].cocoaTouchSystemColor;
+
+                    xibView.color[colorIndex]['$'].colorSpace = "calibratedRGB";
+                    xibView.color[colorIndex]['$'].alpha = 1;
+                    xibView.color[colorIndex]['$'].blue = b;
+                    xibView.color[colorIndex]['$'].green = g;
+                    xibView.color[colorIndex]['$'].red = r;
+
+                    createColor = false;
+                    
+                    if (this.colors !== undefined) {
+
+                        console.log("replaced " + colorKey + " in " + this.viewType + " from " + this.colors[colorKey].hexColor + " => " + replacement[replacementColorKey].value);
+
+                        this.colors[colorKey].hexColor = replacement[replacementColorKey].value;
+                        this.colors[colorKey].rgba.r = r;
+                        this.colors[colorKey].rgba.g = g;
+                        this.colors[colorKey].rgba.b = b;
+                        this.colors[colorKey].rgba.a = 1;
+                    }
+                }
+            }
+            if (createColor) {
+
+                createColor = false;
+                xibView = this.removeNilColorKey(xibView, replacementColorKey);
+                xibView.color[xibView.color.length] = this.colorObject(replacementColorKey, rgb);
+                console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
+            }
+        }
+        if (createColor) {
+
+            xibView = this.removeNilColorKey(xibView, replacementColorKey);
+
+            xibView.color = new Array();
+            xibView.color[0] = this.colorObject(replacementColorKey, rgb);
+
+            console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
+        }
+
+        return (xibInstance);
+    }
+
+    removeNilColorKey(xibView, replacementColorKey) {
+
+        if (xibView.nil !== undefined) {
+            xibView.nil.forEach((nilValue, nilIndex) => {
+                if (nilValue['$'].key == replacementColorKey)
+                    delete xibView.nil[nilIndex];
+            });
+        }
+
+        return (xibView);
+    }
+
+    colorObject(colorKey, rgb, colorSpace) {
+
+        var colorObject = new Object();
+
+        var r = (rgb[0] / 255);
+        var g = (rgb[1] / 255);
+        var b = (rgb[2] / 255);
+
+        colorObject['$'] = new Object();
+        colorObject['$'].key = colorKey;
+        colorObject['$'].colorSpace = (colorSpace === undefined ? "calibratedRGB" : colorSpace);
+        colorObject['$'].alpha = "1";
+        colorObject['$'].blue = b;
+        colorObject['$'].green = g;
+        colorObject['$'].red = r;
+
+        return (colorObject);
+    }
+
+    viewFromXibInstance(xibInstance) {
+
+        var split = this.xmlPath.split(".");
+        var xibView = xibInstance;
+
+        split.forEach((pathComponent, pathIndex) => {
+
+            if (xibView == undefined || xibView == null) {
+                return;
+            }
+            xibView = xibView[pathComponent];
+        });
+
+        return (xibView);
+    }
+
+    /**
+     * @param colorKey - the color key to insert for this view replacement color
+     */
+    canInsertColorKey(colorKey) {
+
+        var canInsertColor;
+        var colorViewTypeCheck;
+
+        switch(colorKey) {
+
+            case "backgroundColor":
+            case "highlighColor":
+            case "tintColor": {
+                colorViewTypeCheck = mod_viewTypes;
+            } break;
+            case "barTintColor": {
+                colorViewTypeCheck = [ "UINavigationBar", "UISearchBar", "UITabBar", "UIToolbar" ];
+            } break;
+            case "textColor": {
+                colorViewTypeCheck = [ "UILabel", "UISearchBar", "UITextField", "UITextView" ];
+            } break;
+            case "titleColor": {
+                colorViewTypeCheck = [ "UIButton" ];
+            } break;
+            default: colorViewTypeCheck = [ "None" ];
+        }
+        canInsertColor = (colorViewTypeCheck.indexOf(this.viewType) >= 0);
+
+        return (canInsertColor);
+    }
 }
 
 class UIActivityIndicatorView extends UIView {
     
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "activityIndicatorView");
 
         this.parseActivityIndicatorView(xibObject);
     }
@@ -368,13 +676,156 @@ class UIActivityIndicatorView extends UIView {
     viewKeyString() { return ("activityIndicatorView"); }
 }
 
+class UIBarButtonItem extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "barButtonItem");
+
+        this.parseBarButtonItem(xibObject);
+    }
+
+    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+
+        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+    }
+
+    replaceXibColors(xibInstance, replacement) {
+
+        if (this.replaced !== undefined) {
+
+            this.replaced.forEach((replacement, replacementIndex) => {
+
+                var replacementKey = Object.keys(replacement)[0];
+                var rgb = mod_hexRGB(replacement[replacementKey].value);
+                if (xibInstance.color !== undefined && this.colors[replacementKey] !== undefined) {
+
+                    xibInstance.color.forEach((xibInstanceColor, xibInstanceColorIndex) => {
+
+                        var colorKey = xibInstanceColor['$']['key'];
+
+                        var r = (rgb[0] / 255);
+                        var g = (rgb[1] / 255);
+                        var b = (rgb[2] / 255);
+
+                        delete xibInstanceColor['$'].white;
+                        delete xibInstanceColor['$'].cocoaTouchSystemColor;
+
+                        xibInstanceColor['$'].colorSpace = "calibratedRGB";
+                        xibInstanceColor['$'].alpha = 1;
+                        xibInstanceColor['$'].blue = b;
+                        xibInstanceColor['$'].green = g;
+                        xibInstanceColor['$'].red = r;
+
+                        if (this.colors !== undefined) {
+
+                            console.log("replaced " + colorKey + " in " + this.viewType + " from " + this.colors[colorKey].hexColor + " => " + replacement[replacementKey].value);
+
+                            this.colors[colorKey].hexColor = replacement[replacementKey].value;
+                            this.colors[colorKey].rgba.r = r;
+                            this.colors[colorKey].rgba.g = g;
+                            this.colors[colorKey].rgba.b = b;
+                            this.colors[colorKey].rgba.a = 1;
+                        }
+                    });
+                }
+                else {
+
+                    xibInstance = this.removeNilColorKey(xibInstance, replacementKey);
+
+                    xibInstance.color = new Array();
+                    xibInstance.color[0] = this.colorObject(replacementKey, rgb);
+
+                    console.log("inserted " + replacementKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementKey].value);
+                }
+            });
+        }
+    }
+
+    parseBarButtonItem(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UIBarButtonItem" : xibObject['$']['customClass']);
+        this.key = xibObject['$'].key;
+        this.title = xibObject['$'].title;
+        this.viewKey = "barButtonItem";
+        this.viewType = "UIBarButtonItem";
+    }
+
+    viewKeyString() { return ("barButtonItem"); }
+}
+
 class UIButton extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "button");
 
         this.parseButton(xibObject);
+    }
+
+    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+
+        if (stateTitle !== undefined && stateTitle !== "Button") {
+            return;
+        }
+        if (viewType !== undefined && viewType !== this.viewType) {
+            return;
+        }
+
+        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+    }
+
+    replaceXibColors(xibInstance, replacement) {
+
+        var replacementColorKey = Object.keys(replacement)[0];
+
+        if (replacementColorKey == "titleColor") {
+
+            var view = this.viewFromXibInstance(xibInstance);
+            var viewStates = view.state;
+
+            if (viewStates !== undefined) {
+
+                viewStates.forEach((viewState, viewStateIndex) => {
+
+                    if (replacement[replacementColorKey].state === undefined ||
+                        replacement[replacementColorKey].state == viewState['$'].key) {
+
+                        var view = this.viewFromXibInstance(xibInstance);
+                        var viewStateColors = view.state[viewStateIndex].color;
+
+                        if (viewStateColors !== undefined) {
+                            
+                                viewStateColors.forEach((viewStateColor, viewStateColorIndex) => {
+
+                                if (viewStateColor['$'].key == replacementColorKey) {
+
+                                    var rgb = mod_hexRGB(replacement[replacementColorKey].value);
+
+                                    var r = (rgb[0] / 255);
+                                    var g = (rgb[1] / 255);
+                                    var b = (rgb[2] / 255);
+
+                                    delete viewStateColor['$'].white;
+                                    delete viewStateColor['$'].cocoaTouchSystemColor;
+
+                                    viewStateColor['$'].colorSpace = "calibratedRGB";
+                                    viewStateColor['$'].alpha = 1;
+                                    viewStateColor['$'].blue = b;
+                                    viewStateColor['$'].green = g;
+                                    viewStateColor['$'].red = r;
+
+                                    console.log("replaced " + viewStateColor['$'].key + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+        else xibInstance = super.replaceXibColors(xibInstance, replacement);
+        
+        return (xibInstance);
     }
 
     parseButton(xibObject) {
@@ -382,6 +833,27 @@ class UIButton extends UIView {
         this.className = (xibObject['$']['customClass'] == undefined ? "UIButton" : xibObject['$']['customClass']);
         this.viewKey = "button";
         this.viewType = "UIButton";
+
+        if (xibObject.state !== undefined) {
+
+            this.states = new Object();
+            xibObject.state.forEach((state, stateIndex) => {
+
+                var stateKey = state['$'].key;
+
+                if (state.color !== undefined) {
+
+                    var colorKey = state.color[0]['$']['key'];
+                    var rgba = this.extractColor(state.color[0]);
+                    var normalizedRGBA = this.normalizeRGBA(rgba);
+                    this.makeColor(normalizedRGBA, colorKey);
+                    this.states[stateKey] = {
+                        colorKey: this.colors
+                    };
+                }
+            });
+            delete this.colors;
+        }
     }
 
     viewKeyString() { return ("button"); }
@@ -391,7 +863,7 @@ class UICollectionView extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "collectionView");
 
         this.parseCollectionView(xibObject);
     }
@@ -478,14 +950,44 @@ class UICollectionViewCell extends UIView {
         }
     }
 
+    replaceXibColors(xibInstance, replacement) {
+        
+        var tempXMLPath = this.xmlPath;
+        this.xmlPath = tempXMLPath.substring(0, tempXMLPath.length - 7);
+        xibInstance = super.replaceXibColors(xibInstance, replacement);
+
+        this.xmlPath = tempXMLPath;
+
+        return (xibInstance);
+    }
+
     viewKeyString() { return (this.viewKey); }
+}
+
+class UIDatePicker extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "datePicker");
+
+        this.parseDatePicker(xibObject);
+    }
+
+    parseDatePicker(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UIDatePicker" : xibObject['$']['customClass']);
+        this.viewKey = "datePicker";
+        this.viewType = "UIDatePicker";
+    }
+
+    viewKeyString() { return ("datePicker"); }
 }
 
 class UIImageView extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "imageView");
 
         this.parseImageView(xibObject);
     }
@@ -504,7 +1006,7 @@ class UILabel extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "label");
 
         this.parseLabel(xibObject);
     }
@@ -519,11 +1021,229 @@ class UILabel extends UIView {
     viewKeyString() { return ("label"); }
 }
 
+class UINavigationBar extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "navigationBar");
+
+        this.parseNavigationBar(xibObject);
+    }
+
+    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+
+        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+
+        if (this.items !== undefined) {
+            this.items.forEach((navigationItem, navigationItemIndex) => {
+                navigationItem.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+            });
+        }
+    }
+
+    replaceXibColors(xibInstance, replacement) {
+
+        var xibView = this.viewFromXibInstance(xibInstance);
+        var replacementKey = Object.keys(replacement)[0];
+
+        if (replacementKey == "textColor") {
+
+            if (xibView.textAttributes[0].color !== undefined) {
+
+                xibView.textAttributes[0].color.forEach((xibViewColor, xibViewColorIndex) => {
+
+                    var colorKey = xibViewColor['$'].key;
+
+                    if (colorKey == replacementKey) {
+
+                        var rgb = mod_hexRGB(replacement[replacementKey].value);
+
+                        var r = (rgb[0] / 255);
+                        var g = (rgb[1] / 255);
+                        var b = (rgb[2] / 255);
+
+                        delete xibViewColor['$'].white;
+                        delete xibViewColor['$'].cocoaTouchSystemColor;
+
+                        xibViewColor['$'].colorSpace = "calibratedRGB";
+                        xibViewColor['$'].alpha = 1;
+                        xibViewColor['$'].blue = b;
+                        xibViewColor['$'].green = g;
+                        xibViewColor['$'].red = r;
+
+                        if (this.colors !== undefined) {
+
+                            console.log("replaced " + colorKey + " in " + this.viewType + " from " + this.colors[colorKey].hexColor + " => " + replacement[replacementKey].value);
+
+                            this.colors[colorKey].hexColor = replacement[replacementKey].value;
+                            this.colors[colorKey].rgba.r = r;
+                            this.colors[colorKey].rgba.g = g;
+                            this.colors[colorKey].rgba.b = b;
+                            this.colors[colorKey].rgba.a = 1;
+                        }
+                    }
+                });
+            }
+            else {
+
+                xibView = this.removeNilColorKey(xibView, replacementKey);
+
+                xibView.textAttributes[0].color = new Array();
+                xibView.textAttributes[0].color[0] = this.colorObject(replacementKey, rgb);
+
+                console.log("inserted " + replacementKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementKey].value);
+            }
+        }
+        else {
+
+            super.replaceXibColors(xibInstance, replacement);
+        }
+
+        xibView.items.forEach((itemView, itemViewIndex) => {
+            this.items[itemViewIndex].replaceXibColors(itemView, replacement);
+        });
+    }
+
+    parseNavigationBar(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UINavigationBar" : xibObject['$']['customClass']);
+        this.viewKey = "navigationBar";
+        this.viewType = "UINavigationBar";
+
+        if (xibObject.items !== undefined) {
+
+            this.items = new Array();
+            
+            xibObject.items.forEach((navigationItem, navigationItemIndex) => {
+
+                this.items[this.items.length] = new UINavigationItem(navigationItem.navigationItem[0]);
+            });
+        }
+        if (xibObject.textAttributes !== undefined) {
+
+            this.colors = new Object();
+            xibObject.textAttributes.forEach((textAttrib, textAttribIndex) => {
+
+                textAttrib.color.forEach((textAttribColor, textAttribColorIndex) => {
+
+                    var colorKey = textAttribColor['$']['key'];
+                    var rgba = this.extractColor(textAttribColor);
+                    var normalizedRGBA = this.normalizeRGBA(rgba);
+                    this.makeColor(normalizedRGBA, colorKey);
+                    this.colors[colorKey].rgba = rgba;
+                });
+            });
+        }
+    }
+
+    hasChanges() {
+
+        var changes = super.hasChanges();
+
+        if (changes == false && this.items !== undefined) {
+            this.items.forEach((subItem) => {
+                changes = subItem.hasChanges();
+            });
+        }
+
+        return (changes);
+    }
+
+    willCommit(xibInstance) {
+
+        this.replaced.forEach((replacement, replacementIndex) => {
+            this.replaceXibColors(xibInstance, replacement);
+        });
+    }
+
+    viewKeyString() { return ("navigationBar"); }
+}
+
+class UINavigationItem extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "navigationItem");
+
+        this.parseNavigationItem(xibObject);
+    }
+
+    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+
+        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+
+        if (this.barButtonItems !== undefined) {
+
+            this.barButtonItems.forEach((barButtonItem, barButtonItemIndex) => {
+                barButtonItem.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+            });
+        }
+    }
+
+    replaceXibColors(xibInstance, replacement) {
+
+        xibInstance.navigationItem[0].barButtonItem.forEach((barButtonView, barButtonViewIndex) => {
+
+            this.barButtonItems[barButtonViewIndex].replaceXibColors(barButtonView, replacement);
+        });
+    }
+
+    parseNavigationItem(xibObject) {
+
+        // this.className = (xibObject['$']['customClass'] == undefined ? "UINavigationItem" : xibObject['$']['customClass']);
+        this.className = "UINavigationItem";
+        this.viewKey = "navigationItem";
+        this.viewType = "UINavigationItem";
+
+        this.barButtonItems = new Array();
+        xibObject.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
+
+            this.barButtonItems[this.barButtonItems.length] = new UIBarButtonItem(barButtonItem);
+        });
+    }
+
+    hasChanges() {
+
+        var changes = super.hasChanges();
+
+        if (changes == false && this.barButtonItems !== undefined) {
+
+            this.barButtonItems.forEach((bbtItem) => {
+
+                changes = bbtItem.hasChanges();
+            });
+        }
+
+        return (changes);
+    }
+
+    viewKeyString() { return ("navigationItem"); }
+}
+
+class UIPickerView extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "pickerView");
+
+        this.parsePickerView(xibObject);
+    }
+
+    parsePickerView(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UIPickerView" : xibObject['$']['customClass']);
+        this.viewKey = "pickerView";
+        this.viewType = "UIPickerView";
+    }
+
+    viewKeyString() { return ("pickerView"); }
+}
+
 class UIScrollView extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "scrollView");
 
         this.parseScrollView(xibObject);
     }
@@ -542,7 +1262,7 @@ class UISearchBar extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "searchBar");
 
         this.parseSearchBar(xibObject);
     }
@@ -561,26 +1281,45 @@ class UISegmentedControl extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "segmentedControl");
 
         this.parseSegmentedControl(xibObject);
     }
 
     parseSegmentedControl(xibObject) {
      
-        this.className = (xibObject['$']['customClass'] == undefined ? "UISearchBar" : xibObject['$']['customClass']);
-        this.viewKey = "searchBar";
-        this.viewType = "UISearchBar";
+        this.className = (xibObject['$']['customClass'] == undefined ? "UISegmentedControl" : xibObject['$']['customClass']);
+        this.viewKey = "segmentedControl";
+        this.viewType = "UISegmentedControl";
     }
 
     viewKeyString() { return ("segmentedControl"); }
+}
+
+class UIStepper extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "stepper");
+
+        this.parseStepper(xibObject);
+    }
+
+    parseStepper(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UIStepper" : xibObject['$']['customClass']);
+        this.viewKey = "stepper";
+        this.viewType = "UIStepper";
+    }
+
+    viewKeyString() { return ("stepper"); }
 }
 
 class UISwitch extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "switch");
 
         this.parseSwitch(xibObject);
     }
@@ -595,11 +1334,49 @@ class UISwitch extends UIView {
     viewKeyString() { return ("switch"); }
 }
 
+class UITabBar extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "tabBar");
+
+        this.parseTabBar(xibObject);
+    }
+
+    parseTabBar(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UITabBar" : xibObject['$']['customClass']);
+        this.viewKey = "tabBar";
+        this.viewType = "UITabBar";
+    }
+
+    viewKeyString() { return ("tabBar"); }
+}
+
+class UITabBarItem extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "tabBarItem");
+
+        this.parseTabBarItem(xibObject);
+    }
+
+    parseTabBarItem(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UITabBarItem" : xibObject['$']['customClass']);
+        this.viewKey = "tabBarItem";
+        this.viewType = "UITabBarItem";
+    }
+
+    viewKeyString() { return ("tabBar"); }
+}
+
 class UITableView extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "tableView");
 
         this.parseTableView(xibObject);
     }
@@ -618,7 +1395,7 @@ class UITableViewCell extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "tableViewCell.0.tableViewCellContentView");
 
         this.parseTableViewCell(xibObject);
     }
@@ -658,7 +1435,7 @@ class UITextField extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "textField");
 
         this.parseTextField(xibObject);
     }
@@ -666,20 +1443,63 @@ class UITextField extends UIView {
     parseTextField(xibObject) {
 
         this.className = (xibObject['$']['customClass'] == undefined ? "UITextField" : xibObject['$']['customClass']);
-        this.viewKey = "textfield";
+        this.viewKey = "textField";
         this.viewType = "UITextField";
     }
 
-    viewKeyString() { return ("textfield"); }
+    viewKeyString() { return ("textField"); }
+}
+
+class UITextView extends UIView {
+
+    constructor(xibObject) {
+
+        super(xibObject, "textView");
+        
+        this.parseTextView(xibObject);
+    }
+
+    parseTextView(xibObject) {
+
+        this.className = (xibObject['$']['customClass'] == undefined ? "UITextField" : xibObject['$']['customClass']);
+        this.viewKey = "textView";
+        this.viewType = "UITextView";
+    }
+
+    viewKeyString() { return ("textView"); }
 }
 
 class UIToolbar extends UIView {
 
     constructor(xibObject) {
 
-        super(xibObject);
+        super(xibObject, "toolbar");
 
         this.parseToolbar(xibObject);
+    }
+
+    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+
+        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+
+        if (this.items !== undefined) {
+
+            this.items.forEach((barButtonItem, barButtonItemIndex) => {
+                barButtonItem.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+            });
+        }
+    }
+
+    replaceXibColors(xibInstance, replacement) {
+
+        super.replaceXibColors(xibInstance, replacement);
+
+        var xibView = this.viewFromXibInstance(xibInstance);
+
+        xibView.items[0].barButtonItem.forEach((xibBarButtonItem, xibBarButtonItemIndex) => {
+
+            xibInstance = this.items[xibBarButtonItemIndex].replaceXibColors(xibBarButtonItem, replacement);
+        });
     }
 
     parseToolbar(xibObject) {
@@ -687,6 +1507,38 @@ class UIToolbar extends UIView {
         this.className = (xibObject['$']['customClass'] == undefined ? "UIToolbar" : xibObject['$']['customClass']);
         this.viewKey = "toolbar";
         this.viewType = "UIToolbar";
+
+        if (xibObject.items !== undefined) {
+
+            this.items = new Array();
+            xibObject.items.forEach((item, itemIndex) => {
+                item.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
+                    this.items[this.items.length] = new UIBarButtonItem(barButtonItem);
+                });
+            });
+        }
+    }
+
+    hasChanges() {
+
+        var changes = super.hasChanges();
+
+        if (changes == false && this.items !== undefined) {
+
+            this.items.forEach((subItem) => {
+
+                changes = subItem.hasChanges();
+            });
+        }
+
+        return (changes);
+    }
+
+    willCommit(xibInstance) {
+
+        this.replaced.forEach((replacement, replacementIndex) => {
+            this.replaceXibColors(xibInstance, replacement);
+        });
     }
 
     viewKeyString() { return ("toolbar"); }
@@ -715,6 +1567,10 @@ function viewInstance(xibKey, xibInstance, xibFile) {
 
         viewInstance = new UIActivityIndicatorView(xibInstance);
     }
+    if (xibKey == "barButtonItem") {
+
+        viewInstance = new UIBarButtonItem(xibInstance);
+    }
     if (xibKey == "button") {
 
         viewInstance = new UIButton(xibInstance);
@@ -731,9 +1587,25 @@ function viewInstance(xibKey, xibInstance, xibFile) {
 
         viewInstance = new UICollectionViewCell(xibInstance, "collectionReusableView");
     }
+    if (xibKey == "datePicker") {
+
+        viewInstance = new UIDatePicker(xibInstance);
+    }
     if (xibKey == "label") {
 
         viewInstance = new UILabel(xibInstance);
+    }
+    if (xibKey == "navigationBar") {
+
+        viewInstance = new UINavigationBar(xibInstance);
+    }
+    if (xibKey == "navigationItem") {
+
+        viewInstance = new UINavigationItem(xibInstance);
+    }
+    if (xibKey == "pickerView") {
+
+        viewInstance = new UIPickerView(xibInstance);
     }
     if (xibKey == "scrollView") {
 
@@ -743,9 +1615,21 @@ function viewInstance(xibKey, xibInstance, xibFile) {
 
         viewInstance = new UISearchBar(xibInstance);
     }
+    if (xibKey == "stepper") {
+
+        viewInstance = new UIStepper(xibInstance);
+    }
     if (xibKey == "switch") {
 
         viewInstance = new UISwitch(xibInstance);
+    }
+    if (xibKey == "tabBar") {
+
+        viewInstance = new UITabBar(xibInstance);
+    }
+    if (xibKey == "tabBarItem") {
+
+        viewInstance = new UITabBarItem(xibInstance);
     }
     if (xibKey == "tableView") {
 
@@ -755,9 +1639,13 @@ function viewInstance(xibKey, xibInstance, xibFile) {
 
         viewInstance = new UITableViewCell(xibInstance);
     }
-    if (xibKey == "textfield") {
+    if (xibKey == "textField") {
 
         viewInstance = new UITextField(xibInstance);
+    }
+    if (xibKey == "textView") {
+
+        viewInstance = new UITextView(xibInstance);
     }
     if (xibKey == "toolbar") {
 
@@ -786,6 +1674,7 @@ function constructSubviewPaths(view, parentXMLPath) {
 
         var viewKeyCounts = new Object();
         var viewKeyCount;
+
         view.subviews.forEach((subview, subviewIndex) => {
 
             viewKeyCount = 0;
@@ -804,12 +1693,27 @@ function constructSubviewPaths(view, parentXMLPath) {
 module.exports = {
 
     UIActivityIndicatorView: UIActivityIndicatorView,
+    UIBarButtonItem: UIBarButtonItem,
+    UIButton: UIButton,
     UICollectionView: UICollectionView,
     UICollectionViewCell: UICollectionViewCell,
+    UIDatePicker: UIDatePicker,
+    UIImageView: UIImageView,
+    UILabel: UILabel,
+    UINavigationBar: UINavigationBar,
+    UINavigationItem: UINavigationItem,
+    UIPickerView: UIPickerView,
+    UIScrollView: UIScrollView,
+    UISearchBar: UISearchBar,
+    UISegmentedControl: UISegmentedControl,
+    UIStepper: UIStepper,
+    UISwitch: UISwitch,
+    UITabBar: UITabBar,
+    UITabBarItem: UITabBarItem,
     UITableView: UITableView,
     UITableViewCell: UITableViewCell,
-    UIScrollView: UIScrollView,
-    UISwitch: UISwitch,
+    UITextField: UITextField,
+    UITextView: UITextView,
     UIToolbar: UIToolbar,
     UIView: UIView,
 

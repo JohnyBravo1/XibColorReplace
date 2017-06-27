@@ -1,11 +1,85 @@
 <replacement>
-    <!--<backgroundColor>
-        <colorReplace>#4D4F55</colorReplace>
-        <colorValue>#F1F1F1</colorValue>
-    </backgroundColor>-->
-    <textColor>
-        <!--<colorValue>#00FF00</colorValue>-->
-        <colorReplace>#FFFFFF</colorReplace>
-    </textColor>
-    <output>./output/</output>
+
+	<input>$DOCUMENTS/Theming/Interfaces/SSPhoneVideoCell.xib</input>
+	<output>$DOCUMENTS/Theming/Interfaces/Replaced</output>
+
+    <backgroundColor>
+        <colorReplace>#FF0000</colorReplace>
+        <viewType>UILabel</viewType>
+    </backgroundColor>
+
+	<backgroundColor>
+		<colorReplace>#00FF00</colorReplace>
+		<viewType>UIButton</viewType>
+	</backgroundColor>
+
+	<backgroundColor>
+		<colorReplace>#0000FF</colorReplace>
+		<viewType>UITextField</viewType>
+	</backgroundColor>
+
+	<backgroundColor>
+		<colorReplace>#FF0000</colorReplace>
+		<viewType>UINavigationBar</viewType>
+	</backgroundColor>
+
+	<backgroundColor>
+		<colorReplace>#0F0F0F</colorReplace>
+		<viewType>UITextView</viewType>
+	</backgroundColor>
+
+	<textColor>
+		<colorReplace>#0000FF</colorReplace>
+		<viewType>UILabel</viewType>
+	</textColor>
+
+	<textColor>
+		<colorReplace>#D5D5D5</colorReplace>
+		<colorValue>#0000FF</colorValue>
+		<viewType>UILabel</viewType>
+	</textColor>
+
+	<titleColor>
+		<colorReplace>#00FFFF</colorReplace>
+		<state>normal</state>
+		<title>Button</title>
+	</titleColor>
+
+	<tintColor>
+		<colorReplace>#FF0000</colorReplace>
+		<viewType>UIDatePicker</viewType>
+	</tintColor>
+
+	<barTintColor>
+		<colorReplace>#FF0000</colorReplace>
+	</barTintColor>
+
+	<textColor>
+		<colorReplace>#FFFFFF</colorReplace>
+	</textColor>
+	<titleColor>
+		<colorReplace>#FFFFFF</colorReplace>
+	</titleColor>
+
 </replacement>
+
+<!--
+background colors:
+
+	views
+		primary: #2E2F32
+		secondary: #4D4F55
+
+	subviews
+		primary: #1F2025
+		header: #282932
+	
+navigation / toolbars:
+
+	primary: #1F2025
+	highlighted: #0B58A2
+	
+text colors:
+	primary: #FFFFFF
+	secondary: #A3A9AE
+-->

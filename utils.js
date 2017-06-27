@@ -30,6 +30,31 @@ function toHex(d, stringLength) {
     return (result);
 }
 
+
+function toDec(hex) {
+
+    hex = hex.replace("#", "").toUpperCase();
+    var charIndex = hex.length;
+    var charVal;
+    var n = 0;
+    var shift = 0;
+    while(charIndex-- > 0) {
+
+        charVal = fromChar(hex.substring(charIndex, charIndex + 1));
+        n += charVal << shift;
+        shift += 4;
+    }
+
+    return (n);
+}
+
+function fromChar(c) {
+
+    const alpha = "0123456789ABCDEF";
+
+    return (alpha.indexOf(c));
+}
+
 function toChar(n) {
 
     const alpha = "0123456789ABCDEF";
@@ -39,5 +64,6 @@ function toChar(n) {
 
 module.exports = {
 
+    toDec: toDec,
     toHex: toHex
 }
