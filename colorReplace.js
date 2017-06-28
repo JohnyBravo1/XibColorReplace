@@ -19,21 +19,22 @@ class Template {
 
         if (templatePath !== undefined) {
 
+            this.outputPath = outputPath;
             this.parseTemplate(templatePath);
         }
         else {
 
             this.outputPath = outputPath;
             this.addReplacement(replaceColorKey, replaceColorValue, replaceColorWithValue);
+            this.createOutputIfNotExist();
         }
-        this.createOutputIfNotExist();
         console.log("OUTPUT SET TO: [ " + this.outputPath + " ]");
         console.log("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
     }
 
     createOutputIfNotExist() {
 
-        if (!mod_fs.existsSync(this.outputPath)) {
+        if (this.outputPath !== undefined && !mod_fs.existsSync(this.outputPath)) {
             
             mod_fs.mkdir(this.outputPath, (error) => {
 
@@ -99,8 +100,10 @@ class Template {
                     this.addReplacement(replacementKey, colorValue, colorReplace, state, stateTitle, viewType);
                 });
             });
-            this.inputPath = mod_dir.FilePath.specialPath(templateXMLInstance.replacement.input[0]);
-            this.outputPath = mod_dir.FilePath.specialPath(templateXMLInstance.replacement.output[0]);
+
+            if (templateXMLInstance.replacement.input !== undefined) this.inputPath = mod_dir.FilePath.specialPath(templateXMLInstance.replacement.input[0]);
+            if (templateXMLInstance.replacement.output !== undefined) this.outputPath = mod_dir.FilePath.specialPath(templateXMLInstance.replacement.output[0]);
+            this.createOutputIfNotExist();
 
             if (!mod_fs.existsSync(this.inputPath)) {
 
@@ -201,17 +204,22 @@ if (!mod_fs.existsSync(workPath)) {
     process.exit(0);
 }
 
-var stat = mod_fs.statSync(workPath);
 var template = undefined;
 
 if (templatePath !== undefined) {
 
     if (workPath == templatePath) {
         template = new Template(templatePath);
-        workPath = template.inputPath;
+        workPath = (template.inputPath !== undefined ? template.inputPath : workPath);
+    }
+    else if (templatePath !== undefined) {
+
+        template = new Template(templatePath, undefined, undefined, undefined, outputPath);
     }
 } 
 else template = new Template(undefined, replaceColorKey, replaceColorValue, replaceColorWithValue, outputPath);
+
+var stat = mod_fs.statSync(workPath);
 
 if (stat.isDirectory()) {
 
@@ -245,8 +253,9 @@ function processXib(xib) {
                 objKeys.forEach((key, index) => {
 
                     var viewInstance = mod_nibs.viewInstance(key, objcs[key][0], xib);
+
                     if (viewInstance !== undefined) {
-                        
+
                         template.replace(xibInstance, viewInstance);
                     }
                 });

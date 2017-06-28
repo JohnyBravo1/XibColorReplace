@@ -61,7 +61,6 @@ class Args {
                 if (extension instanceof Array) {
 
                     var isOneOf = false;
-                    console.log(extension);
                     extension.forEach((ext, extIndex) => {
                         if (fileArg.indexOf(ext) !== -1) {
                             isOneOf = true;

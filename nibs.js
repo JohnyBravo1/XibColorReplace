@@ -951,11 +951,14 @@ class UICollectionViewCell extends UIView {
     }
 
     replaceXibColors(xibInstance, replacement) {
-        
-        var tempXMLPath = this.xmlPath;
-        this.xmlPath = tempXMLPath.substring(0, tempXMLPath.length - 7);
-        xibInstance = super.replaceXibColors(xibInstance, replacement);
 
+        var tempXMLPath = this.xmlPath;
+
+        if (this.viewKey != "collectionReusableView") {
+
+            this.xmlPath = tempXMLPath.substring(0, tempXMLPath.length - 7);
+        }
+        xibInstance = super.replaceXibColors(xibInstance, replacement);
         this.xmlPath = tempXMLPath;
 
         return (xibInstance);
