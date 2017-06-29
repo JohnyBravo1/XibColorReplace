@@ -91,7 +91,7 @@ class Template {
                 if (replacementKey == "output") return;
                 templateXMLInstance.replacement[replacementKey].forEach((replacement, replacementIndex) => {
 
-                    var colorValue = (replacement.colorValue !== undefined ? replacement.colorValue[0] : undefined);
+                    var colorValue = (replacement.colorValue !== undefined ? replacement.colorValue : undefined);
                     var colorReplace = (replacement.colorReplace !== undefined ? replacement.colorReplace[0] : undefined);
                     var state = (replacement.state !== undefined ? replacement.state[0] : undefined);
                     var stateTitle = (replacement.title !== undefined ? replacement.title[0] : undefined);
@@ -116,7 +116,14 @@ class Template {
 
         this.replacement.forEach((r, rIndex) => {
 
-            viewInstance.replace(r.colorKey, r.colorValue, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
+            if (r.colorValue !== undefined && r.colorValue instanceof Array) {
+
+                r.colorValue.forEach((colorValue, colorValueIndex) => {
+
+                    viewInstance.replace(r.colorKey, colorValue, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
+                });
+            }
+            else viewInstance.replace(r.colorKey, r.colorValue, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
         });
         viewInstance.commit(xibInstance, this.outputPath);
     }
@@ -218,6 +225,12 @@ if (templatePath !== undefined) {
     }
 } 
 else template = new Template(undefined, replaceColorKey, replaceColorValue, replaceColorWithValue, outputPath);
+
+if (outputPath !== undefined && (outputPath.indexOf(".xml") !== -1 || outputPath.indexOf(".template") !== -1)) {
+
+    outputPath = undefined;
+    outputPath = "./output";
+}
 
 var stat = mod_fs.statSync(workPath);
 

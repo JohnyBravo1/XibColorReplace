@@ -1118,7 +1118,6 @@ class UINavigationBar extends UIView {
             this.items = new Array();
             
             xibObject.items.forEach((navigationItem, navigationItemIndex) => {
-
                 this.items[this.items.length] = new UINavigationItem(navigationItem.navigationItem[0]);
             });
         }
