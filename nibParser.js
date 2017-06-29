@@ -3,6 +3,8 @@ var mod_fs = require('fs');
 var mod_nibs = require('./nibs.js');
 var mod_xml2js = require('xml2js');
 
+var unknownElementTypes = [ 'placeholder', 'screenEdgePanGestureRecognizer', 'tapGestureRecognizer', 'swipeGestureRecognizer' ];
+
 var projectDir = process.argv[2];
 
 if (projectDir == undefined) {
@@ -60,7 +62,7 @@ function writeColors(xibObject, xibFile) {
         if (viewInstance !== undefined) {
             viewInstance.outputColor();
         }
-        else {
+        else if (unknownElementTypes.indexOf(key) === -1) {
             console.log("===>> UNKNOWN ELEMENT: " + key);
         }
     });

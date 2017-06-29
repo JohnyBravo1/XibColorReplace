@@ -1017,6 +1017,7 @@ class UILabel extends UIView {
     parseLabel(xibObject) {
 
         this.className = (xibObject['$']['customClass'] == undefined ? "UILabel" : xibObject['$']['customClass']);
+        this.labelText = xibObject['$'].text;
         this.viewKey = "label";
         this.viewType = "UILabel";
     }
@@ -1126,14 +1127,17 @@ class UINavigationBar extends UIView {
             this.colors = new Object();
             xibObject.textAttributes.forEach((textAttrib, textAttribIndex) => {
 
-                textAttrib.color.forEach((textAttribColor, textAttribColorIndex) => {
+                if (textAttrib.color !== undefined) {
 
-                    var colorKey = textAttribColor['$']['key'];
-                    var rgba = this.extractColor(textAttribColor);
-                    var normalizedRGBA = this.normalizeRGBA(rgba);
-                    this.makeColor(normalizedRGBA, colorKey);
-                    this.colors[colorKey].rgba = rgba;
-                });
+                    textAttrib.color.forEach((textAttribColor, textAttribColorIndex) => {
+
+                        var colorKey = textAttribColor['$']['key'];
+                        var rgba = this.extractColor(textAttribColor);
+                        var normalizedRGBA = this.normalizeRGBA(rgba);
+                        this.makeColor(normalizedRGBA, colorKey);
+                        this.colors[colorKey].rgba = rgba;
+                    });
+                }
             });
         }
     }
@@ -1514,9 +1518,13 @@ class UIToolbar extends UIView {
 
             this.items = new Array();
             xibObject.items.forEach((item, itemIndex) => {
-                item.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
-                    this.items[this.items.length] = new UIBarButtonItem(barButtonItem);
-                });
+
+                if (item.barButtonItem !== undefined) {
+
+                    item.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
+                        this.items[this.items.length] = new UIBarButtonItem(barButtonItem);
+                    });
+                }
             });
         }
     }
@@ -1555,8 +1563,8 @@ class UIToolbar extends UIView {
  */
 function viewInstance(xibKey, xibInstance, xibFile) {
 
-    var unkownKeys = [ 'placeholder', 'screenEdgePanGestureRecognizer' ];
-    if (mod_viewKeys.indexOf(xibKey) === -1 && unkownKeys.indexOf(xibKey) === -1) {
+    var unknownElementTypes = [ 'placeholder', 'screenEdgePanGestureRecognizer', 'tapGestureRecognizer', 'swipeGestureRecognizer' ];
+    if (mod_viewKeys.indexOf(xibKey) === -1 && unknownElementTypes.indexOf(xibKey) === -1) {
 
         console.log("[" + xibKey + "] unknown key for creating view instance: ");
         return;
