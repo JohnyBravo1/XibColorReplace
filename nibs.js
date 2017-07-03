@@ -1431,6 +1431,34 @@ class UITableViewCell extends UIView {
                     this.colors[colorKey].rgba = rgba;
                 });
             }
+            else if (xibObject.color !== undefined) {
+
+                xibObject.color.forEach((color, colorIndex) => {
+
+                    var colorKey = color['$']['key'];
+                    var rgba = this.extractColor(color);
+                    var normalizedRGBA = this.normalizeRGBA(rgba);
+                    this.makeColor(normalizedRGBA, colorKey);
+                    this.colors[colorKey].rgba = rgba;
+                });
+            }
+        }
+    }
+
+    replaceXibColors(xibInstance, replacement) {
+
+        var tempXMLPath = this.xmlPath;
+        this.xmlPath = this.xmlPath.substring(0, this.xmlPath.length - 27);
+        var tableCell = this.viewFromXibInstance(xibInstance);
+        
+        if (tableCell !== undefined && tableCell.color !== undefined) {
+            
+            super.replaceXibColors(xibInstance, replacement);
+            this.xmlPath = tempXMLPath;
+        }
+        tableCell = this.viewFromXibInstance(xibInstance);
+        if (tableCell !== undefined && tableCell.color !== undefined) {
+            super.replaceXibColors(xibInstance, replacement);
         }
     }
 

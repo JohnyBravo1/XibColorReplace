@@ -86,6 +86,7 @@ class Template {
 
             var replacementKeys = Object.keys(templateXMLInstance.replacement);
 
+
             replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
 
                 if (replacementKey == "output") return;
