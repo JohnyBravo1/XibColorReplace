@@ -4,8 +4,8 @@ var mod_hexRGB = require('hex-rgb');
 var mod_plist = require('plist');
 var mod_utils = require('./utils.js');
 
-var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 
-                    'sectionIndexTrackingBackgroundColor', 'separatorColor', 'shadowColor', 'switch', 'textColor', 'tintColor' ];
+var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexTrackingBackgroundColor', 
+                    'separatorColor', 'shadowColor', 'switch', 'textColor', 'titleColor', 'titleShadowColor', 'tintColor' ];
 var mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
                     'datePicker', 'imageView', 'label', 'navigationBar', 'navigationItem', 'pickerView', 'scrollView', 'searchBar', 
                     'segmentedControl', 'stepper', 'switch', 'tabBar', 'tabBarItem', 'tableView', 'tableViewCell', 'textField', 'textView', 
@@ -454,60 +454,94 @@ class UIView {
         return (viewJSON);
     }
 
-    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+    replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType) {
 
         var canReplace = (viewType === undefined || viewType === this.viewType);
+        var colorExcluded = this.excludeColor(colorKey, colorExclude);
 
         // replace any previous populated replacements if this replacement overrides the previous ones
         if (canReplace) {
-            var replaceLength = (this.replaced !== undefined ? this.replaced.length : 0);
-            for (var replaceIndex = 0; replaceIndex < replaceLength; replaceIndex++) {
-                if (this.replaced[replaceIndex][colorKey] !== undefined && 
-                    (colorValue === undefined || this.replaced[replaceIndex][colorKey].value == colorValue)) {
-                    this.replaced[replaceIndex][colorKey].value = replaceValue;
-                    console.log(("replaced a replacement for " + colorKey + " in " + this.viewType).toUpperCase());
-                    canReplace = false;
+
+            if (!colorExcluded) {
+
+                var replaceLength = (this.replaced !== undefined ? this.replaced.length : 0);
+                for (var replaceIndex = 0; replaceIndex < replaceLength; replaceIndex++) {
+                    if (this.replaced[replaceIndex][colorKey] !== undefined && 
+                        (colorValue === undefined || this.replaced[replaceIndex][colorKey].value == colorValue)) {
+                        this.replaced[replaceIndex][colorKey].value = replaceValue;
+                        console.log(("replaced a replacement for " + colorKey + " in " + this.viewType).toUpperCase());
+                        canReplace = false;
+                    }
                 }
             }
-        }
-        if (canReplace && this.colors !== undefined && this.colors[colorKey] !== undefined) {
+            else return;
 
-            if (colorValue === undefined || this.colors[colorKey].hexColor == colorValue) {
+            if (this.colors !== undefined && this.colors[colorKey] !== undefined) {
 
-                this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
-                var replacement = new Object();
+                if (colorValue === undefined || this.colors[colorKey].hexColor == colorValue) {
 
-                replacement[colorKey] = new Object();
-                if (state !== undefined) replacement[colorKey].state = state;
-                if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
-                replacement[colorKey].value = replaceValue;
+                    this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+                    var replacement = new Object();
 
-                this.replaced[this.replaced.length] = replacement;
+                    replacement[colorKey] = new Object();
+                    if (state !== undefined) replacement[colorKey].state = state;
+                    if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
+                    replacement[colorKey].value = replaceValue;
+
+                    this.replaced[this.replaced.length] = replacement;
+                }
             }
-        }
-        else if (canReplace && colorValue === undefined) {
+            else if (colorValue === undefined) {
 
-            if (this.canInsertColorKey(colorKey)) {
+                if (this.canInsertColorKey(colorKey)) {
 
-                this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
-                var replacement = new Object();
+                    this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+                    var replacement = new Object();
 
-                replacement[colorKey] = new Object();
-                if (state !== undefined) replacement[colorKey].state = state;
-                if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
+                    replacement[colorKey] = new Object();
+                    if (state !== undefined) replacement[colorKey].state = state;
+                    if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
 
-                replacement[colorKey].value = replaceValue;
+                    replacement[colorKey].value = replaceValue;
 
-                this.replaced[this.replaced.length] = replacement;
-                this.makeColor(undefined, colorKey, replaceValue);
+                    this.replaced[this.replaced.length] = replacement;
+                    this.makeColor(undefined, colorKey, replaceValue);
+                }
             }
         }
         if (this.subviews !== undefined) {
 
             this.subviews.forEach((subview, subviewIndex) => {
-                subview.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+                subview.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
             });
         }
+    }
+
+    excludeColor(colorKey, colorExclude) {
+
+        var colorExcluded = false;
+
+        if (this.replaced !== undefined && colorExclude !== undefined) {
+
+            this.replaced.forEach((replacement, replacementIndex) => {
+
+                if (replacement[colorKey] !== undefined) {
+
+                    colorExclude.forEach((exclude, excludeIndex) => {
+
+                        if (colorExcluded = replacement[colorKey].value == exclude) {
+
+                            // delete this.replaced[replacementIndex][colorKey];
+
+                            console.log(("excluded: " + colorKey + " [" + exclude + "] in => " + this.viewType));
+                            colorExcluded = true;
+                        }
+                    });
+                }
+            });
+        }
+
+        return (colorExcluded);
     }
     
     replaceXibColors(xibInstance, replacement) {
@@ -646,12 +680,14 @@ class UIView {
             case "textColor": {
                 colorViewTypeCheck = [ "UILabel", "UISearchBar", "UITextField", "UITextView" ];
             } break;
-            case "titleColor": {
-                colorViewTypeCheck = [ "UIButton" ];
-            } break;
             default: colorViewTypeCheck = [ "None" ];
         }
         canInsertColor = (colorViewTypeCheck.indexOf(this.viewType) >= 0);
+
+        if (!canInsertColor) {
+
+            console.log(this.viewType + " CANNOT INSERT: " + colorKey);
+        }
 
         return (canInsertColor);
     }
@@ -685,9 +721,9 @@ class UIBarButtonItem extends UIView {
         this.parseBarButtonItem(xibObject);
     }
 
-    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+    replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType) {
 
-        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+        super.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
     }
 
     replaceXibColors(xibInstance, replacement) {
@@ -760,29 +796,61 @@ class UIButton extends UIView {
 
         super(xibObject, "button");
 
+        this.buttonColorKeys = [ 'titleColor', 'titleShadowColor' ];
+
         this.parseButton(xibObject);
     }
 
-    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+    replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType) {
 
-        if (stateTitle !== undefined && stateTitle !== "Button") {
-            return;
-        }
         if (viewType !== undefined && viewType !== this.viewType) {
             return;
         }
 
-        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+        if (this.buttonColorKeys.indexOf(colorKey) !== -1) {
+
+            if (this.colors !== undefined && this.colors[colorKey] !== undefined) {
+
+                if (colorValue === undefined || this.colors[colorKey].hexColor == colorValue) {
+
+                    this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+                    var replacement = new Object();
+
+                    replacement[colorKey] = new Object();
+                    if (state !== undefined) replacement[colorKey].state = state;
+                    if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
+                    replacement[colorKey].value = replaceValue;
+
+                    this.replaced[this.replaced.length] = replacement;
+                }
+            }
+            else if (colorValue === undefined) {
+
+                this.replaced = (this.replaced === undefined ? new Array() : this.replaced);
+                var replacement = new Object();
+
+                replacement[colorKey] = new Object();
+                if (state !== undefined) replacement[colorKey].state = state;
+                if (stateTitle !== undefined) replacement[colorKey].stateTitle = stateTitle;
+
+                replacement[colorKey].value = replaceValue;
+
+                this.replaced[this.replaced.length] = replacement;
+                this.makeColor(undefined, colorKey, replaceValue);
+            }
+        }
+        else super.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
     }
 
     replaceXibColors(xibInstance, replacement) {
 
         var replacementColorKey = Object.keys(replacement)[0];
 
-        if (replacementColorKey == "titleColor") {
+        if (replacementColorKey == "titleColor" || replacementColorKey == "titleShadowColor") {
 
             var view = this.viewFromXibInstance(xibInstance);
             var viewStates = view.state;
+            var colorReplaced = false;
 
             if (viewStates !== undefined) {
 
@@ -791,20 +859,19 @@ class UIButton extends UIView {
                     if (replacement[replacementColorKey].state === undefined ||
                         replacement[replacementColorKey].state == viewState['$'].key) {
 
-                        var view = this.viewFromXibInstance(xibInstance);
+                        var rgb = mod_hexRGB(replacement[replacementColorKey].value);
                         var viewStateColors = view.state[viewStateIndex].color;
+
+                        var r = (rgb[0] / 255);
+                        var g = (rgb[1] / 255);
+                        var b = (rgb[2] / 255);
 
                         if (viewStateColors !== undefined) {
                             
-                                viewStateColors.forEach((viewStateColor, viewStateColorIndex) => {
+                            var lastColorIndex = viewStateColors.length;
+                            viewStateColors.forEach((viewStateColor, viewStateColorIndex) => {
 
                                 if (viewStateColor['$'].key == replacementColorKey) {
-
-                                    var rgb = mod_hexRGB(replacement[replacementColorKey].value);
-
-                                    var r = (rgb[0] / 255);
-                                    var g = (rgb[1] / 255);
-                                    var b = (rgb[2] / 255);
 
                                     delete viewStateColor['$'].white;
                                     delete viewStateColor['$'].cocoaTouchSystemColor;
@@ -815,15 +882,36 @@ class UIButton extends UIView {
                                     viewStateColor['$'].green = g;
                                     viewStateColor['$'].red = r;
 
+                                    colorReplaced = true;
+
                                     console.log("replaced " + viewStateColor['$'].key + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
                                 }
                             });
+                        }
+                        if (!colorReplaced) {
+
+                            var colorObject = new Object();
+
+                            colorObject.alpha = 1;
+                            colorObject.blue = b;
+                            colorObject.colorSpace = "calibratedRGB";
+                            colorObject.green = g;
+                            colorObject.key = replacementColorKey;
+                            colorObject.red = r;
+
+                            view.state[viewStateIndex].color[lastColorIndex] = new Object();
+                            view.state[viewStateIndex].color[lastColorIndex]['$'] = colorObject;
+
+                            console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
                         }
                     }
                 });
             }
         }
-        else xibInstance = super.replaceXibColors(xibInstance, replacement);
+        else {
+
+            xibInstance = super.replaceXibColors(xibInstance, replacement);
+        } 
         
         return (xibInstance);
     }
@@ -1034,13 +1122,13 @@ class UINavigationBar extends UIView {
         this.parseNavigationBar(xibObject);
     }
 
-    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+    replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType) {
 
-        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+        super.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
 
         if (this.items !== undefined) {
             this.items.forEach((navigationItem, navigationItemIndex) => {
-                navigationItem.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+                navigationItem.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
             });
         }
     }
@@ -1174,14 +1262,14 @@ class UINavigationItem extends UIView {
         this.parseNavigationItem(xibObject);
     }
 
-    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+    replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType) {
 
-        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+        super.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
 
         if (this.barButtonItems !== undefined) {
 
             this.barButtonItems.forEach((barButtonItem, barButtonItemIndex) => {
-                barButtonItem.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+                barButtonItem.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
             });
         }
     }
@@ -1450,14 +1538,16 @@ class UITableViewCell extends UIView {
         var tempXMLPath = this.xmlPath;
         this.xmlPath = this.xmlPath.substring(0, this.xmlPath.length - 27);
         var tableCell = this.viewFromXibInstance(xibInstance);
-        
+        var didReplace = false;
+
         if (tableCell !== undefined && tableCell.color !== undefined) {
             
             super.replaceXibColors(xibInstance, replacement);
             this.xmlPath = tempXMLPath;
+            didReplace = true;
         }
         tableCell = this.viewFromXibInstance(xibInstance);
-        if (tableCell !== undefined && tableCell.color !== undefined) {
+        if (!didReplace || (tableCell !== undefined && tableCell.color !== undefined)) {
             super.replaceXibColors(xibInstance, replacement);
         }
     }
@@ -1512,14 +1602,14 @@ class UIToolbar extends UIView {
         this.parseToolbar(xibObject);
     }
 
-    replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType) {
+    replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType) {
 
-        super.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+        super.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
 
         if (this.items !== undefined) {
 
             this.items.forEach((barButtonItem, barButtonItemIndex) => {
-                barButtonItem.replace(colorKey, colorValue, replaceValue, state, stateTitle, viewType);
+                barButtonItem.replace(colorKey, colorValue, colorExclude, replaceValue, state, stateTitle, viewType);
             });
         }
     }

@@ -51,18 +51,21 @@ class Template {
      * adds a color replacement description
      * 
      * @param replaceColorKey
+     * @param replaceColorExclude
      * @param replaceColorValue
      * @param state
      * @param stateTitle
      * @param viewType
      */
-    addReplacement(replaceColorKey, replaceColorValue, replaceColorWithValue, state, stateTitle, viewType) {
+    //this.addReplacement(replacementKey, colorValue, colorExclude, colorReplace, state, stateTitle, viewType);
+    addReplacement(replaceColorKey, replaceColorValue, replaceColorExclude, replaceColorWithValue, state, stateTitle, viewType) {
 
         var replacementDescriptor = { colorKey: replaceColorKey, 
-                                    colorValue: replaceColorValue,
                              replaceColorValue: replaceColorWithValue };
 
-        if (state !== undefined ) replacementDescriptor.state = state;
+        if (replaceColorValue !== undefined) replacementDescriptor.colorValue = replaceColorValue;
+        if (replaceColorExclude !== undefined) replacementDescriptor.colorExclude = replaceColorExclude;
+        if (state !== undefined) replacementDescriptor.state = state;
         if (stateTitle !== undefined) replacementDescriptor.stateTitle = stateTitle;
         if (viewType !== undefined) replacementDescriptor.viewType = viewType;
 
@@ -86,19 +89,20 @@ class Template {
 
             var replacementKeys = Object.keys(templateXMLInstance.replacement);
 
-
             replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
 
+                if (replacementKey == "input") return;
                 if (replacementKey == "output") return;
                 templateXMLInstance.replacement[replacementKey].forEach((replacement, replacementIndex) => {
 
+                    var colorExclude = (replacement.colorExclude !== undefined ? replacement.colorExclude : undefined);
                     var colorValue = (replacement.colorValue !== undefined ? replacement.colorValue : undefined);
                     var colorReplace = (replacement.colorReplace !== undefined ? replacement.colorReplace[0] : undefined);
                     var state = (replacement.state !== undefined ? replacement.state[0] : undefined);
                     var stateTitle = (replacement.title !== undefined ? replacement.title[0] : undefined);
                     var viewType = (replacement.viewType !== undefined ? replacement.viewType[0] : undefined);
 
-                    this.addReplacement(replacementKey, colorValue, colorReplace, state, stateTitle, viewType);
+                    this.addReplacement(replacementKey, colorValue, colorExclude, colorReplace, state, stateTitle, viewType);
                 });
             });
 
@@ -117,14 +121,16 @@ class Template {
 
         this.replacement.forEach((r, rIndex) => {
 
+            var colorExclude = (r.colorExclude !== undefined ? r.colorExclude : undefined);
+
             if (r.colorValue !== undefined && r.colorValue instanceof Array) {
 
                 r.colorValue.forEach((colorValue, colorValueIndex) => {
 
-                    viewInstance.replace(r.colorKey, colorValue, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
+                    viewInstance.replace(r.colorKey, colorValue, colorExclude, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
                 });
             }
-            else viewInstance.replace(r.colorKey, r.colorValue, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
+            else viewInstance.replace(r.colorKey, r.colorValue, colorExclude, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
         });
         viewInstance.commit(xibInstance, this.outputPath);
     }
