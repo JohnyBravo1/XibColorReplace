@@ -4,8 +4,9 @@ var mod_hexRGB = require('hex-rgb');
 var mod_plist = require('plist');
 var mod_utils = require('./utils.js');
 
-var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexTrackingBackgroundColor', 
-                    'separatorColor', 'shadowColor', 'switch', 'textColor', 'titleColor', 'titleShadowColor', 'tintColor' ];
+var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexBackgroundColor', 
+                    'sectionIndexTrackingBackgroundColor', 'separatorColor', 'shadowColor', 'switch', 'textColor', 'titleColor', 'titleShadowColor', 
+                    'tintColor' ];
 var mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
                     'datePicker', 'imageView', 'label', 'navigationBar', 'navigationItem', 'pickerView', 'scrollView', 'searchBar', 
                     'segmentedControl', 'stepper', 'switch', 'tabBar', 'tabBarItem', 'tableView', 'tableViewCell', 'textField', 'textView', 
@@ -677,6 +678,10 @@ class UIView {
             case "barTintColor": {
                 colorViewTypeCheck = [ "UINavigationBar", "UISearchBar", "UITabBar", "UIToolbar" ];
             } break;
+            case "sectionIndexBackgroundColor":
+            case "sectionIndexTrackingBackgroundColor": {
+                colorViewTypeCheck = [ "UITableView" ];
+            } break;
             case "textColor": {
                 colorViewTypeCheck = [ "UILabel", "UISearchBar", "UITextField", "UITextView" ];
             } break;
@@ -899,6 +904,8 @@ class UIButton extends UIView {
                             colorObject.key = replacementColorKey;
                             colorObject.red = r;
 
+                            if (view.state[viewStateIndex].color === undefined) view.state[viewStateIndex].color = new Object();
+                            
                             view.state[viewStateIndex].color[lastColorIndex] = new Object();
                             view.state[viewStateIndex].color[lastColorIndex]['$'] = colorObject;
 
