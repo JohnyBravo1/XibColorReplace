@@ -492,7 +492,7 @@ class UIView {
                     this.replaced[this.replaced.length] = replacement;
                 }
             }
-            else if (colorValue === undefined) {
+            else if (colorValue === undefined && viewType == this.viewType) {
 
                 if (this.canInsertColorKey(colorKey)) {
 
@@ -905,7 +905,7 @@ class UIButton extends UIView {
                             colorObject.red = r;
 
                             if (view.state[viewStateIndex].color === undefined) view.state[viewStateIndex].color = new Object();
-                            
+
                             view.state[viewStateIndex].color[lastColorIndex] = new Object();
                             view.state[viewStateIndex].color[lastColorIndex]['$'] = colorObject;
 
@@ -918,7 +918,7 @@ class UIButton extends UIView {
         else {
 
             xibInstance = super.replaceXibColors(xibInstance, replacement);
-        } 
+        }
         
         return (xibInstance);
     }
