@@ -5,7 +5,7 @@ var mod_plist = require('plist');
 var mod_utils = require('./utils.js');
 
 var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexBackgroundColor', 
-                    'sectionIndexTrackingBackgroundColor', 'separatorColor', 'shadowColor', 'switch', 'textColor', 'titleColor', 'titleShadowColor', 
+                    'sectionIndexTrackingBackgroundColor', 'separatorColor', 'shadowColor', 'textColor', 'titleColor', 'titleShadowColor', 
                     'tintColor' ];
 var mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
                     'datePicker', 'imageView', 'label', 'navigationBar', 'navigationItem', 'pickerView', 'scrollView', 'searchBar', 
@@ -689,12 +689,47 @@ class UIView {
         }
         canInsertColor = (colorViewTypeCheck.indexOf(this.viewType) >= 0);
 
-        if (!canInsertColor) {
-
-            console.log(this.viewType + " CANNOT INSERT: " + colorKey);
-        }
-
         return (canInsertColor);
+    }
+
+/*
+<userDefinedRuntimeAttributes>
+    <userDefinedRuntimeAttribute type="string" keyPath="textColor" value="primary"/>
+</userDefinedRuntimeAttributes>
+*/
+    theme(themeStyle, colorKeys) {
+
+        colorKeys = (colorKeys === undefined ? [ "backgroundColor", "textColor", "tintColor" ] : colorKeys);
+        colorKeys = (colorKeys instanceof Array ? colorKeys : [ colorKeys ]);
+
+        if (this.userDefinedRuntimeAttributes === undefined) {
+            this.userDefinedRuntimeAttributes = new Array();
+        }
+        var attribs = new Object();
+        attribs.userDefinedRuntimeAttribute = new Array();
+        colorKeys.forEach((colorKey, colorKeyIndex) => {
+
+            if (!this.canInsertColorKey(colorKey)) return;
+
+            var userDefinedRuntimeAttributeInstance = new Object();
+            userDefinedRuntimeAttributeInstance['$'] = new Object();
+
+            userDefinedRuntimeAttributeInstance['$'].keyPath = colorKey;
+            userDefinedRuntimeAttributeInstance['$'].type = "string";
+            userDefinedRuntimeAttributeInstance['$'].value = themeStyle;
+            
+            attribs.userDefinedRuntimeAttribute[attribs.userDefinedRuntimeAttribute.length] = userDefinedRuntimeAttributeInstance;
+        });
+        console.log(attribs);
+        this.userDefinedRuntimeAttributes = attribs;
+
+        if (this.subviews !== undefined) {
+
+            this.subviews.forEach((subview, subviewIndex) => {
+
+                subview.theme(themeStyle, colorKeys);
+            });
+        }
     }
 }
 

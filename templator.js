@@ -1,11 +1,11 @@
 var mod_args = require('./args');
 var mod_dir = require('./../dir');
 var mod_fs = require('fs');
-var mod_hexRGB = require('hex-rgb');
 var mod_nibs = require('./nibs');
+var mod_plist = require('plist');
 var mod_xml2js = require('xml2js');
 
-var args = mod_args.args;
+var templatePath = mod_args.args.fileArgument(undefined, ".template");
 
 class Template {
 
@@ -135,152 +135,77 @@ class Template {
         });
         viewInstance.commit(xibInstance, this.outputPath);
     }
-}
 
-var workPath = args.argument(0);
-var outputPath = args.argument(1);
-var replaceColorKey = args.argumentWithin(mod_nibs.colorKeys, true);
-var replaceColorValue = args.argument(3);
-var replaceColorWithValue = args.argument(4);
-var templatePath = args.fileArgument(undefined, [ ".template", ".xml" ]);
 
-if (args.argsLength < 1 || args.argsLength == 1 && templatePath === undefined) {
+    applyTheme(xibInstance, viewInstance) {
 
-    printUsage();
-    process.exit(0);
-}
+        var xibView = viewInstance.viewFromXibInstance(xibInstance);
 
-if (replaceColorWithValue === undefined) {
+        if (xibView !== undefined) {
 
-    replaceColorWithValue = replaceColorValue;
-    replaceColorValue = undefined;
-}
+            xibView.userDefinedRuntimeAttributes = viewInstance.userDefinedRuntimeAttributes;
 
-function commit(xibInstance, outputPath) {
+            if (viewInstance.subviews !== undefined) {
 
-    if (!this.hasChanges()) return;
+                viewInstance.subviews.forEach((subview, subviewIndex) => {
 
-    this.willCommit(xibInstance);
-    
-    if (this.replaced !== undefined) {
-
-        this.replaced.forEach((replacement, replacementIndex) => {
-
-            var replacementKeys = Object.keys(replacement);
-
-            replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
-                this.replaceXibColors(xibInstance, replacement);
-            });
-        });
-    }
-    if (this.subviews !== undefined) {
-
-        this.subviews.forEach((subview, subviewIndex) => {
-            subview.commit(xibInstance, outputPath);
-        });
-    }
-    //only write changes made from the parent view instance
-    if (this.xmlPath.indexOf("subview") === -1) {
-        
-        var outputPathStat = mod_fs.statSync(outputPath);
-
-        if (outputPathStat.isDirectory()) outputPath += "/" + this.xibName;
-
-        var builder = new mod_xml2js.Builder();
-        var xml = builder.buildObject(xibInstance).toString();
-
-        mod_fs.writeFile(outputPath, xml, (err) => {
-
-            if (err !== null) console.log(err);
-        });
-    }
-
-    return (xibInstance);
-}
-
-mod_nibs.UIView.prototype.commit = commit;
-
-function printUsage() {
-
-    console.log("usage: ColorReplace [workingPath] [template|outputPath] [template|replaceColorKey|replaceColorValue|replaceColorWithValue]");
-    console.log("replaces colorkeys if found within the xib files that match the color values to the new color values");
-    console.log("workingPath - the directory / file to work with containing xib files");
-    console.log("outputPath - the output directory of the replaced interfaces");
-    console.log("template - a xml input file containing all color keys and colors to replace within the interface(s)");
-    console.log("replaceColorKey - replace the color keys matching this key within the interfaces");
-    console.log("replaceColorValue - replace all values for color key matching this value");
-    console.log("replaceColorWithValue - replace all matched color values with specified value");
-    console.log("template - a path to a xml template document that maps out what colors to replace within the interface files");
-}
-
-if (!mod_fs.existsSync(workPath)) {
-
-    console.log("invalid working path specified: " + workPath);
-    process.exit(0);
-}
-
-var template = undefined;
-
-if (templatePath !== undefined) {
-
-    if (workPath == templatePath) {
-        template = new Template(templatePath);
-        workPath = (template.inputPath !== undefined ? template.inputPath : workPath);
-    }
-    else if (templatePath !== undefined) {
-
-        template = new Template(templatePath, undefined, undefined, undefined, outputPath);
-    }
-} 
-else template = new Template(undefined, replaceColorKey, replaceColorValue, replaceColorWithValue, outputPath);
-
-if (outputPath !== undefined && (outputPath.indexOf(".xml") !== -1 || outputPath.indexOf(".template") !== -1)) {
-
-    outputPath = undefined;
-    outputPath = "./output";
-}
-
-var stat = mod_fs.statSync(workPath);
-
-if (stat.isDirectory()) {
-
-    var xibs = new mod_dir.Directory(workPath).filesWithExtension(".xib", true);
-    xibs.forEach((xib, xibIndex) => {
-        processXib(xib);
-    });
-}
-else processXib(workPath);
-
-function processXib(xib) {
-
-    console.log("working with: [" + xib + "]");
-    console.log("===========================");
-    var xibXML = mod_fs.readFileSync(xib);
-
-    if (xibXML !== undefined) {
-
-        var xmlParser = new mod_xml2js.Parser();
-        xmlParser.parseString(xibXML, (err, xibInstance) => {
-
-            if ((err !== undefined && err !== null) ||
-                (xibInstance === undefined || xibInstance === null)) {
-                console.log("failed to parse: " + xib + " with error:" + err);
+                    this.applyTheme(xibInstance, subview);
+                });
             }
-            else if (xibInstance.document !== undefined) {
+        }
 
-                var objcs = xibInstance.document.objects[0];
-                var objKeys = Object.keys(objcs);
+        //only write changes made from the parent view instance
+        if (viewInstance.xmlPath.indexOf("subview") === -1) {
+            
+            var outputPathStat = mod_fs.statSync(outputPath);
 
-                objKeys.forEach((key, index) => {
+            if (outputPathStat.isDirectory()) outputPath += "/" + viewInstance.xibName;
 
-                    var viewInstance = mod_nibs.viewInstance(key, objcs[key][0], xib);
+            var builder = new mod_xml2js.Builder();
+            var xml = builder.buildObject(xibInstance).toString();
 
+            mod_fs.writeFile(outputPath, xml, (err) => {
+
+                if (err !== null) console.log(err);
+            });
+        }
+    }
+}
+
+var template = new Template(templatePath);
+var inputPath = template.inputPath;
+var outputPath = template.outputPath;
+
+var dir = new mod_dir.Directory(inputPath);
+var xibs = dir.filesWithExtension(".xib", true);
+
+if (xibs !== undefined) {
+
+    xibs.forEach((xibFile, xibIndex) => {
+
+        var xibContent = mod_fs.readFileSync(xibFile);
+        new mod_xml2js.Parser().parseString(xibContent, (err, xibInstance) => {
+
+            if (err != null) {
+
+                console.log(err);
+                process.exit(0);
+            }
+            if (xibInstance !== undefined && xibInstance.document !== undefined) {
+
+                var xibObjects = xibInstance.document.objects[0];
+                var objectKeys = Object.keys(xibObjects);
+
+                objectKeys.forEach((objectKey, objectKeyIndex) => {
+
+                    var viewInstance = mod_nibs.viewInstance(objectKey, xibObjects[objectKey][0], xibFile);
                     if (viewInstance !== undefined) {
 
-                        template.replace(xibInstance, viewInstance);
+                        viewInstance.theme("primary", [ "backgroundColor", "textColor" ]);
+                        template.applyTheme(xibInstance, viewInstance);
                     }
                 });
             }
         });
-    }
+    });
 }
