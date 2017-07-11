@@ -137,7 +137,7 @@ class Template {
     }
 }
 
-var workPath = args.argument(0);
+var workPath = args.fileArgument(args.argument(0), [ ".xib" ]);
 var outputPath = args.argument(1);
 var replaceColorKey = args.argumentWithin(mod_nibs.colorKeys, true);
 var replaceColorValue = args.argument(3);
@@ -272,11 +272,9 @@ function processXib(xib) {
                 var objKeys = Object.keys(objcs);
 
                 objKeys.forEach((key, index) => {
-
                     var viewInstance = mod_nibs.viewInstance(key, objcs[key][0], xib);
 
                     if (viewInstance !== undefined) {
-
                         template.replace(xibInstance, viewInstance);
                     }
                 });

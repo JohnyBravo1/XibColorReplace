@@ -896,7 +896,7 @@ class UIButton extends UIView {
 
                 viewStates.forEach((viewState, viewStateIndex) => {
 
-                    if (replacement[replacementColorKey].state === undefined ||
+                    if ((replacement[replacementColorKey].state === undefined && viewState['$'].key == "normal") ||
                         replacement[replacementColorKey].state == viewState['$'].key) {
 
                         var rgb = mod_hexRGB(replacement[replacementColorKey].value);
@@ -908,7 +908,6 @@ class UIButton extends UIView {
 
                         if (viewStateColors !== undefined) {
                             
-                            var lastColorIndex = viewStateColors.length;
                             viewStateColors.forEach((viewStateColor, viewStateColorIndex) => {
 
                                 if (viewStateColor['$'].key == replacementColorKey) {
@@ -931,18 +930,19 @@ class UIButton extends UIView {
                         if (!colorReplaced) {
 
                             var colorObject = new Object();
+                            var colorLength = view.state[viewStateIndex].color.length;
 
-                            colorObject.alpha = 1;
-                            colorObject.blue = b;
-                            colorObject.colorSpace = "calibratedRGB";
-                            colorObject.green = g;
-                            colorObject.key = replacementColorKey;
-                            colorObject.red = r;
+                            colorObject['$'] = new Object();
+                            colorObject['$'].alpha = 1;
+                            colorObject['$'].blue = b;
+                            colorObject['$'].colorSpace = "calibratedRGB";
+                            colorObject['$'].green = g;
+                            colorObject['$'].key = replacementColorKey;
+                            colorObject['$'].red = r;
 
                             if (view.state[viewStateIndex].color === undefined) view.state[viewStateIndex].color = new Object();
-
-                            view.state[viewStateIndex].color[lastColorIndex] = new Object();
-                            view.state[viewStateIndex].color[lastColorIndex]['$'] = colorObject;
+                            
+                            view.state[viewStateIndex].color[colorLength] = colorObject;
 
                             console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
                         }
