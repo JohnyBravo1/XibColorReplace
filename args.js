@@ -44,6 +44,27 @@ class Args {
         return (argument);
     }
 
+    directoryArgument(defaultValue) {
+
+        var dirArg = undefined;
+        for (var index = 0; index < this.argsLength; index++) {
+
+            dirArg = this.args[index];
+
+            if (mod_fs.existsSync(dirArg)) {
+
+                var stat = mod_fs.statSync(dirArg);
+
+                if (stat.isDirectory()) {
+
+                    return (dirArg);
+                }
+            }
+        }
+
+        return (defaultValue);
+    }
+
     /**
      * returns the first file argument
      * 

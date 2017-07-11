@@ -1,11 +1,15 @@
 var mod_args = require('./args');
 var mod_dir = require('./../dir');
 var mod_fs = require('fs');
-var mod_hexRGB = require('hex-rgb');
-var mod_nibs = require('./nibs');
+var mod_plist = require('plist');
 var mod_xml2js = require('xml2js');
 
-var args = mod_args.args;
+/**
+ * MAPS COLORS USED WITHIN REPLACE TEMPLATES INTO THEME STYLE COLORS
+ */
+
+var input = mod_args.args.argument(0, "$DOCUMENTS/SS/Theming/Templates/");
+var output = mod_args.args.argument(1, "$DOCUMENTS/SS/Theming/ReplacedThemes/");
 
 class Template {
 
@@ -29,8 +33,6 @@ class Template {
             this.addReplacement(replaceColorKey, replaceColorValue, replaceColorWithValue);
             this.createOutputIfNotExist();
         }
-        console.log("OUTPUT SET TO: [ " + this.outputPath + " ]");
-        console.log("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
     }
 
     createOutputIfNotExist() {
@@ -43,7 +45,7 @@ class Template {
 
                     console.log(error);
                     process.exit(0);
-                }
+                } 
             });
         }
     }
@@ -58,6 +60,7 @@ class Template {
      * @param stateTitle
      * @param viewType
      */
+    //this.addReplacement(replacementKey, colorValue, colorExclude, colorReplace, state, stateTitle, viewType);
     addReplacement(replaceColorKey, replaceColorValue, replaceColorExclude, replaceColorWithValue, state, stateTitle, viewType) {
 
         var replacementDescriptor = { colorKey: replaceColorKey, 
@@ -86,6 +89,7 @@ class Template {
             if (err != null || err != undefined) {
                 return;
             }
+
             var replacementKeys = Object.keys(templateXMLInstance.replacement);
 
             replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
@@ -118,16 +122,7 @@ class Template {
 
     replace(xibInstance, viewInstance) {
 
-        var theme = false;
         this.replacement.forEach((r, rIndex) => {
-
-            if (r.replaceColorValue !== undefined && r.replaceColorValue.indexOf("ary") !== -1) {
-
-                // theme(themeStyle, colorKeys);
-                viewInstance.theme(r.replaceColorValue, r.colorKey);
-                theme = true;
-                return;
-            }
 
             var colorExclude = (r.colorExclude !== undefined ? r.colorExclude : undefined);
 
@@ -140,11 +135,10 @@ class Template {
             }
             else viewInstance.replace(r.colorKey, r.colorValue, colorExclude, r.replaceColorValue, r.state, r.stateTitle, r.viewType);
         });
-        if (theme) this.applyTheme(xibInstance, viewInstance, this.outputPath);
-        else viewInstance.commit(xibInstance, this.outputPath);
+        viewInstance.commit(xibInstance, this.outputPath);
     }
 
-    applyTheme(xibInstance, viewInstance, outputPath) {
+    applyTheme(xibInstance, viewInstance) {
 
         var xibView = viewInstance.viewFromXibInstance(xibInstance);
 
@@ -174,155 +168,131 @@ class Template {
             mod_fs.writeFile(outputPath, xml, (err) => {
 
                 if (err !== null) console.log(err);
-                else console.log("themed " + viewInstance.xibName);
             });
         }
     }
-}
 
-var workPath = args.fileArgument(args.argument(0), [ ".xib" ]);
-var outputPath = args.argument(1);
-var replaceColorKey = args.argumentWithin(mod_nibs.colorKeys, true);
-var replaceColorValue = args.argument(3);
-var replaceColorWithValue = args.argument(4);
-var templatePath = args.fileArgument(undefined, [ ".template", ".xml" ]);
+    buildTemplate() {
 
-if (workPath == templatePath) workPath = args.directoryArgument(args.argument(1));
+        var templateInstance = new Object();
 
-if (args.argsLength < 1 || args.argsLength == 1 && templatePath === undefined) {
+        templateInstance.replacement = new Object();
+        templateInstance.replacement.output = "$DOCUMENTS/SS/Theming/ReplacedMajor";
+        this.replacement.forEach((replacement, replacementIndex) => {
 
-    printUsage();
-    process.exit(0);
-}
+            if (templateInstance.replacement[replacement.colorKey] === undefined) {
 
-if (replaceColorWithValue === undefined) {
-
-    replaceColorWithValue = replaceColorValue;
-    replaceColorValue = undefined;
-}
-
-function commit(xibInstance, outputPath) {
-
-    if (!this.hasChanges()) return;
-
-    this.willCommit(xibInstance);
-    
-    if (this.replaced !== undefined) {
-
-        this.replaced.forEach((replacement, replacementIndex) => {
-
-            var replacementKeys = Object.keys(replacement);
-
-            replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
-                this.replaceXibColors(xibInstance, replacement);
-            });
-        });
-    }
-    if (this.subviews !== undefined) {
-
-        this.subviews.forEach((subview, subviewIndex) => {
-            subview.commit(xibInstance, outputPath);
-        });
-    }
-    //only write changes made from the parent view instance
-    if (this.xmlPath.indexOf("subview") === -1) {
-        
-        var outputPathStat = mod_fs.statSync(outputPath);
-
-        if (outputPathStat.isDirectory()) outputPath += "/" + this.xibName;
-
-        var builder = new mod_xml2js.Builder();
-        var xml = builder.buildObject(xibInstance).toString();
-
-        mod_fs.writeFile(outputPath, xml, (err) => {
-
-            if (err !== null) console.log(err);
-        });
-    }
-
-    return (xibInstance);
-}
-
-mod_nibs.UIView.prototype.commit = commit;
-
-function printUsage() {
-
-    console.log("usage: ColorReplace [workingPath] [template|outputPath] [template|replaceColorKey|replaceColorValue|replaceColorWithValue]");
-    console.log("replaces colorkeys if found within the xib files that match the color values to the new color values");
-    console.log("workingPath - the directory / file to work with containing xib files");
-    console.log("outputPath - the output directory of the replaced interfaces");
-    console.log("template - a xml input file containing all color keys and colors to replace within the interface(s)");
-    console.log("replaceColorKey - replace the color keys matching this key within the interfaces");
-    console.log("replaceColorValue - replace all values for color key matching this value");
-    console.log("replaceColorWithValue - replace all matched color values with specified value");
-    console.log("template - a path to a xml template document that maps out what colors to replace within the interface files");
-}
-
-if (!mod_fs.existsSync(workPath)) {
-
-    console.log("invalid working path specified: " + workPath);
-    process.exit(0);
-}
-
-var template = undefined;
-
-if (templatePath !== undefined) {
-
-    if (workPath == templatePath) {
-        template = new Template(templatePath);
-        workPath = (template.inputPath !== undefined ? template.inputPath : workPath);
-    }
-    else if (templatePath !== undefined) {
-
-        template = new Template(templatePath, undefined, undefined, undefined, outputPath);
-    }
-} 
-else template = new Template(undefined, replaceColorKey, replaceColorValue, replaceColorWithValue, outputPath);
-
-if (outputPath !== undefined && (outputPath.indexOf(".xml") !== -1 || outputPath.indexOf(".template") !== -1)) {
-
-    outputPath = "./output";
-}
-
-var stat = mod_fs.statSync(workPath);
-
-if (stat.isDirectory()) {
-
-    var xibs = new mod_dir.Directory(workPath).filesWithExtension(".xib", true);
-    xibs.forEach((xib, xibIndex) => {
-        processXib(xib);
-    });
-}
-else processXib(workPath);
-
-function processXib(xib) {
-
-    console.log("working with: [" + xib + "]");
-    console.log("===========================");
-    var xibXML = mod_fs.readFileSync(xib);
-
-    if (xibXML !== undefined) {
-
-        var xmlParser = new mod_xml2js.Parser();
-        xmlParser.parseString(xibXML, (err, xibInstance) => {
-
-            if ((err !== undefined && err !== null) ||
-                (xibInstance === undefined || xibInstance === null)) {
-                console.log("failed to parse: " + xib + " with error:" + err);
+                templateInstance.replacement[replacement.colorKey] = new Array();
             }
-            else if (xibInstance.document !== undefined) {
 
-                var objcs = xibInstance.document.objects[0];
-                var objKeys = Object.keys(objcs);
+            var len = templateInstance.replacement[replacement.colorKey].length;
+            templateInstance.replacement[replacement.colorKey][len] = new Object();
 
-                objKeys.forEach((key, index) => {
-                    var viewInstance = mod_nibs.viewInstance(key, objcs[key][0], xib);
+            templateInstance.replacement[replacement.colorKey][len].colorReplace = replacement.replaceColorValue;
+            templateInstance.replacement[replacement.colorKey][len].colorValue = replacement.colorValue;
+            templateInstance.replacement[replacement.colorKey][len].viewType = replacement.viewType;
+        });
 
-                    if (viewInstance !== undefined) {
-                        template.replace(xibInstance, viewInstance);
+        return (templateInstance);
+    }
+
+    createTemplate() {
+
+        var xmlBuilder = new mod_xml2js.Builder();
+        var template = this.buildTemplate();
+        var xmlInstance = xmlBuilder.buildObject(template);
+
+        this.outputPath = (this.outputPath === undefined ? mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Templates/major.template") : this.outputPath);
+        mod_fs.writeFile(this.outputPath, xmlInstance, (err) => {
+
+            if (err != null) {
+
+                console.log("failed to create template with: " + err);
+            }
+        });
+    }
+}
+
+class ThemeMap {
+
+    static map(colorKey, colorHex) {
+
+        var mappedStyle = "tertiary";
+
+        if (ThemeMap.themeMap === undefined) {
+
+            ThemeMap.themeMap = ThemeMap.readTheme();
+        }
+
+        Object.keys(ThemeMap.themeMap).forEach((themeStyle, themeStyleIndex) => {
+
+            if (ThemeMap.themeMap[themeStyle][colorKey] == colorHex) {
+
+                mappedStyle = themeStyle;
+                return;
+            }
+        });
+
+        return (mappedStyle);
+    }
+
+    static readTheme() {
+
+        var themePath = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Theme-Dark.plist");
+
+        if (mod_fs.existsSync(themePath)) {
+
+            var data = mod_fs.readFileSync(themePath, 'utf-8');
+            var themePlist = mod_plist.parse(data.toString());
+
+            return (themePlist);
+        }
+
+        return (undefined);
+    }
+}
+
+var themeTemplate = new Template();
+var dir = new mod_dir.Directory(input);
+var path = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Extracts/colors.plist");
+var templates = dir.filesWithExtension("template");
+var colorPlist = undefined;
+var unknownColors = new Object();
+
+mod_fs.readFile(path, (err, data) => {
+
+    if (err != null) {
+
+        console.log(err);
+    }
+    else {
+        
+        colorPlist = mod_plist.parse(data.toString());
+        var colorPlistKeys = Object.keys(colorPlist);
+
+        var length = 0;
+        templates.forEach((templateFile, templateFileIndex) => {
+
+            var template = new Template(templateFile);
+            if (template.replacement !== undefined) {
+
+                template.replacement.forEach((replacement, replacementIndex) => {
+
+                    if (replacement.colorValue !== undefined) {
+
+                        replacement.colorValue.forEach((colorValue, colorValueIndex) => {
+
+                            if (colorPlist[replacement.colorKey].indexOf(colorValue) !== -1) {
+
+                                var themeKey = ThemeMap.map(replacement.replaceColorValue);
+                                themeTemplate.addReplacement(replacement.colorKey, replacement.colorValue, undefined, themeKey, undefined, undefined, replacement.viewType);
+                            }
+                        });
                     }
                 });
             }
         });
+
+        themeTemplate.createTemplate();
     }
-}
+});

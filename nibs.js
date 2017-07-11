@@ -692,11 +692,6 @@ class UIView {
         return (canInsertColor);
     }
 
-/*
-<userDefinedRuntimeAttributes>
-    <userDefinedRuntimeAttribute type="string" keyPath="textColor" value="primary"/>
-</userDefinedRuntimeAttributes>
-*/
     theme(themeStyle, colorKeys) {
 
         colorKeys = (colorKeys === undefined ? [ "backgroundColor", "textColor", "tintColor" ] : colorKeys);
@@ -720,7 +715,6 @@ class UIView {
             
             attribs.userDefinedRuntimeAttribute[attribs.userDefinedRuntimeAttribute.length] = userDefinedRuntimeAttributeInstance;
         });
-        console.log(attribs);
         this.userDefinedRuntimeAttributes = attribs;
 
         if (this.subviews !== undefined) {
