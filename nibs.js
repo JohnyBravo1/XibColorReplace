@@ -701,10 +701,22 @@ class UIView {
             this.userDefinedRuntimeAttributes = new Array();
         }
         var attribs = new Object();
-        attribs.userDefinedRuntimeAttribute = new Array();
+        var skip = false;
+        attribs.userDefinedRuntimeAttribute = (this.userDefinedRuntimeAttributes.userDefinedRuntimeAttribute !== undefined ? this.userDefinedRuntimeAttributes.userDefinedRuntimeAttribute : new Array());
         colorKeys.forEach((colorKey, colorKeyIndex) => {
 
-            if (!this.canInsertColorKey(colorKey)) return;
+            if (!this.canInsertColorKey(colorKey, true)) return;
+            if (colorKey == "backgroundColor" && [ "UIImageView", "UIView" ].indexOf(this.viewType) === -1) return;
+
+            attribs.userDefinedRuntimeAttribute.forEach((attrib, attribIndex) => {
+
+                if (attrib['$'].keyPath == colorKey) {
+
+                    skip = true;
+                    return;
+                }
+            });
+            if (skip) return;
 
             var userDefinedRuntimeAttributeInstance = new Object();
             userDefinedRuntimeAttributeInstance['$'] = new Object();
@@ -715,12 +727,12 @@ class UIView {
             
             attribs.userDefinedRuntimeAttribute[attribs.userDefinedRuntimeAttribute.length] = userDefinedRuntimeAttributeInstance;
         });
-        this.userDefinedRuntimeAttributes = attribs;
-
+        if (attribs.userDefinedRuntimeAttribute.length > 0) {
+            this.userDefinedRuntimeAttributes = attribs;
+        }
         if (this.subviews !== undefined) {
 
             this.subviews.forEach((subview, subviewIndex) => {
-
                 subview.theme(themeStyle, colorKeys);
             });
         }

@@ -115,7 +115,7 @@ class Template {
 
             if (!mod_fs.existsSync(this.inputPath)) {
 
-                console.log("Invalid input specified in template: " + this.inputPath);
+                console.log("invalid input specified in template: " + this.inputPath);
             }
         });
     }
@@ -209,6 +209,10 @@ class Template {
 
                 console.log("failed to create template with: " + err);
             }
+            else {
+
+                console.log("created a single theming template at path [" + this.outputPath + "]");
+            }
         });
     }
 }
@@ -217,7 +221,7 @@ class ThemeMap {
 
     static map(colorKey, colorHex) {
 
-        var mappedStyle = "tertiary";
+        var mappedStyle = "primary";
 
         if (ThemeMap.themeMap === undefined) {
 
@@ -273,6 +277,8 @@ mod_fs.readFile(path, (err, data) => {
         var length = 0;
         templates.forEach((templateFile, templateFileIndex) => {
 
+            if (templateFile.indexOf("major") !== -1) return;
+            console.log("working with template: " + templateFile);
             var template = new Template(templateFile);
             if (template.replacement !== undefined) {
 

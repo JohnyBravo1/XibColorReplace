@@ -123,12 +123,10 @@ class Template {
 
             if (r.replaceColorValue !== undefined && r.replaceColorValue.indexOf("ary") !== -1) {
 
-                // theme(themeStyle, colorKeys);
                 viewInstance.theme(r.replaceColorValue, r.colorKey);
                 theme = true;
                 return;
             }
-
             var colorExclude = (r.colorExclude !== undefined ? r.colorExclude : undefined);
 
             if (r.colorValue !== undefined && r.colorValue instanceof Array) {
