@@ -704,9 +704,9 @@ class UIView {
         var skip = false;
         attribs.userDefinedRuntimeAttribute = (this.userDefinedRuntimeAttributes.userDefinedRuntimeAttribute !== undefined ? this.userDefinedRuntimeAttributes.userDefinedRuntimeAttribute : new Array());
         colorKeys.forEach((colorKey, colorKeyIndex) => {
-
+            
             if (!this.canInsertColorKey(colorKey, true)) return;
-            if (colorKey == "backgroundColor" && [ "UIImageView", "UIView" ].indexOf(this.viewType) === -1) return;
+            if (colorKey == "backgroundColor" && [ "UICollectionView", "UICollectionViewCell", "UIImageView", "UIScrollView", "UITableView", "UITableViewCell", "UITextView", "UIView" ].indexOf(this.viewType) === -1) return;
 
             attribs.userDefinedRuntimeAttribute.forEach((attrib, attribIndex) => {
 
