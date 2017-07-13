@@ -180,16 +180,41 @@ class Template {
         templateInstance.replacement.output = "$DOCUMENTS/SS/Theming/ReplacedMajor";
         this.replacement.forEach((replacement, replacementIndex) => {
 
+            var skip = false;
+
+            if (replacement.colorKey === undefined) {
+
+                return;
+            }
+
             if (templateInstance.replacement[replacement.colorKey] === undefined) {
 
                 templateInstance.replacement[replacement.colorKey] = new Array();
+            }
+            else {
+
+                templateInstance.replacement[replacement.colorKey].forEach((checkReplace, checkReplaceIndex) => {
+
+                    if (checkReplace.colorReplace == replacement.replaceColorValue && checkReplace.viewType == replacement.viewType) {
+
+                        if (checkReplace.colorValue + "" == replacement.colorValue + "") {
+
+                            skip = true;
+                            return;
+                        }
+                    }
+                });
+            }
+
+            if (skip) {
+                return;
             }
 
             var len = templateInstance.replacement[replacement.colorKey].length;
             templateInstance.replacement[replacement.colorKey][len] = new Object();
 
             templateInstance.replacement[replacement.colorKey][len].colorReplace = replacement.replaceColorValue;
-            templateInstance.replacement[replacement.colorKey][len].colorValue = replacement.colorValue;
+            if (replacement.colorValue !== undefined) templateInstance.replacement[replacement.colorKey][len].colorValue = replacement.colorValue;
             templateInstance.replacement[replacement.colorKey][len].viewType = replacement.viewType;
         });
 
