@@ -1,15 +1,7 @@
-var mod_args = require('./args');
-var mod_dir = require('./../dir');
+var mod_dir = require('./dir');
 var mod_fs = require('fs');
 var mod_plist = require('plist');
 var mod_xml2js = require('xml2js');
-
-/**
- * MAPS COLORS USED WITHIN REPLACE TEMPLATES INTO THEME STYLE COLORS
- */
-
-var input = mod_args.args.argument(0, "$DOCUMENTS/SS/Theming/Templates/");
-var output = mod_args.args.argument(1, "$DOCUMENTS/SS/Theming/ReplacedThemes/");
 
 class Template {
 
@@ -221,13 +213,13 @@ class Template {
         return (templateInstance);
     }
 
-    createTemplate() {
+    createTemplate(creationPath) {
 
         var xmlBuilder = new mod_xml2js.Builder();
         var template = this.buildTemplate();
         var xmlInstance = xmlBuilder.buildObject(template);
 
-        this.outputPath = (this.outputPath === undefined ? mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Templates/major.template") : this.outputPath);
+        creationPath = (creationPath === undefined ? "$DOCUMENTS/SS/Theming/Templates/major.template" : creationPath);
         mod_fs.writeFile(this.outputPath, xmlInstance, (err) => {
 
             if (err != null) {
@@ -236,108 +228,87 @@ class Template {
             }
             else {
 
-                console.log("created a single theming template at path [" + this.outputPath + "]");
+                console.log("created a single theming template at path [" + creationPath + "]");
             }
         });
     }
 }
 
-class ThemeMap {
+class Colors {
 
-    static map(colorKey, colorHex) {
+    constructor(plistInstance) {
 
-        var mappedStyle = "secondary";
-
-        if (colorKey === undefined || colorHex === undefined) {
-
-            console.log("colorKey or colorHex for mapping theme key not specified");
-            return (mappedStyle);
-        }
-        if (colorHex.length == 7) {
-
-            colorHex = colorHex.substring(1, colorHex.length);
-        }
-        if (ThemeMap.themeMap === undefined) {
-
-            ThemeMap.themeMap = ThemeMap.readTheme();
-        }
-        colorHex = colorHex.toUpperCase();
-        Object.keys(ThemeMap.themeMap).forEach((themeStyle, themeStyleIndex) => {
-
-            if (ThemeMap.themeMap[themeStyle][colorKey] === undefined) {
-
-                console.log("unable to map (" + colorKey.toUpperCase() + ") - " + colorKey + " with hex (#" + colorHex.toUpperCase() + ")" + " from Theme-Convert.plist");
-                return;
-            }
-            if (ThemeMap.themeMap[themeStyle][colorKey].toUpperCase() == colorHex) {
-
-                mappedStyle = themeStyle;
-                return;
-            }
-        });
-
-        return (mappedStyle);
+        this.parsePlist(plistInstance);
     }
 
-    static readTheme() {
+    allColors(colorKey) {
 
-        var themePath = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Theme-Convert.plist");
+        var colors = undefined;
 
-        if (mod_fs.existsSync(themePath)) {
+        if (colorKey === undefined) {
 
-            var data = mod_fs.readFileSync(themePath, 'utf-8');
-            var themePlist = mod_plist.parse(data.toString());
+        }
+        else if (this.colors[colorKey] !== undefined) {
 
-            return (themePlist);
+            colors = (colors !== undefined ? colors : new Object());
+            colors[colorKey] = new Object();
+            Object.assign(colors[colorKey], this.colors[colorKey]);
+        }
+        if (this.subviews !== undefined) {
+
+            this.subviews.forEach((subview, subviewIndex) => {
+
+                var childColors = subview.allColors(colorKey);
+
+                if (childColors) {
+                }
+            });
         }
 
-        return (undefined);
+        return (colors);
+    }
+
+    parsePlist(plistInstance) {
+
+        if (plistInstance.subviews !== undefined) {
+
+            this.subviews = new Array();
+            plistInstance.subviews.forEach((subview, subviewIndex) => {
+
+                this.subviews[this.subviews.length] = new Colors(subview);
+            });
+        }
+        if (plistInstance.colors !== undefined) {
+
+            this.colors = new Object();
+            Object.assign(this.colors, plistInstance.colors);
+
+            this.className = plistInstance.className;
+            this.viewType = plistInstance.viewType;
+        }
     }
 }
 
-var themeTemplate = new Template();
-var dir = new mod_dir.Directory(input);
-var path = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Extracts/colors.plist");
-var templates = dir.filesWithExtension("template");
-var colorPlist = undefined;
-var unknownColors = new Object();
+var colorsPath = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Extracts");
 
-mod_fs.readFile(path, (err, data) => {
+var majorTemplatePath = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Templates/major.template");
+var template = new Template(majorTemplatePath);
 
-    if (err != null) {
+var colorsDir = new mod_dir.Directory(colorsPath);
 
-        console.log(err);
+var plistFiles = colorsDir.filesWithExtension(".plist", true);
+
+plistFiles.forEach((plistFile, plistFileIndex) => {
+
+    if (plistFile.indexOf(".xib") == -1) {
+        return;
     }
-    else {
-        
-        colorPlist = mod_plist.parse(data.toString());
-        var colorPlistKeys = Object.keys(colorPlist);
 
-        var length = 0;
-        templates.forEach((templateFile, templateFileIndex) => {
+    var plistInstance = mod_plist.parse(mod_fs.readFileSync(plistFile, 'utf8'));
 
-            if (templateFile.indexOf("major") !== -1) return;
-            console.log("working with template: " + templateFile);
-            var template = new Template(templateFile);
-            if (template.replacement !== undefined) {
+    var colorsInstance = new Colors(plistInstance);
 
-                template.replacement.forEach((replacement, replacementIndex) => {
-
-                    if (replacement.colorValue !== undefined) {
-
-                        replacement.colorValue.forEach((colorValue, colorValueIndex) => {
-
-                            if (colorPlist[replacement.colorKey].indexOf(colorValue) !== -1) {
-
-                                var themeKey = ThemeMap.map(replacement.colorKey, replacement.replaceColorValue);
-                                themeTemplate.addReplacement(replacement.colorKey, replacement.colorValue, undefined, themeKey, undefined, undefined, replacement.viewType);
-                            }
-                        });
-                    }
-                });
-            }
-        });
-
-        themeTemplate.createTemplate();
-    }
+    var allColors = colorsInstance.allColors("backgroundColor");
+    console.log(allColors);
+    process.exit(0);
 });
