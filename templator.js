@@ -7,6 +7,13 @@ var mod_xml2js = require('xml2js');
 
 var templatePath = mod_args.args.fileArgument(undefined, ".template");
 
+/**
+ * BRIEF DEBRIEF,
+ * 
+ * templator inserts userDefinedRuntimeAttributes mapped by a Theme-Convert plist placed in the Templates folder of the
+ * SS directory that is used to specify if a color maps to Primary, Secondary, Tertiary or Additional...
+ */
+
 class Template {
 
     /**
@@ -172,6 +179,78 @@ class Template {
     }
 }
 
+class ThemeMap {
+
+    static map(colorKey, colorHex) {
+
+        var mappedStyle = "secondary";
+
+        if (colorKey === undefined || colorHex === undefined) {
+
+            console.log("colorKey or colorHex for mapping theme key not specified");
+            return (mappedStyle);
+        }
+        if (colorHex.length == 7) {
+
+            colorHex = colorHex.substring(1, colorHex.length);
+        }
+        if (ThemeMap.themeMap === undefined) {
+
+            ThemeMap.themeMap = ThemeMap.readTheme();
+        }
+        colorHex = colorHex.toUpperCase();
+        Object.keys(ThemeMap.themeMap).forEach((themeStyle, themeStyleIndex) => {
+
+            if (ThemeMap.themeMap[themeStyle][colorKey] === undefined) {
+
+                console.log("unable to map (" + colorKey.toUpperCase() + ") - " + colorKey + " with hex (#" + colorHex.toUpperCase() + ")" + " from Theme-Convert.plist");
+                return;
+            }
+            if (ThemeMap.themeMap[themeStyle][colorKey].toUpperCase() == colorHex) {
+
+                mappedStyle = themeStyle;
+                return;
+            }
+        });
+
+        return (mappedStyle);
+    }
+
+    static readTheme() {
+
+        var themePath = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Theme-Convert.plist");
+
+        if (mod_fs.existsSync(themePath)) {
+
+            var data = mod_fs.readFileSync(themePath, 'utf-8');
+            var themePlist = mod_plist.parse(data.toString());
+
+            return (themePlist);
+        }
+
+        return (undefined);
+    }
+}
+
+mod_nibs.UIView.prototype.template = function() {
+
+    if (this.colors !== undefined) {
+
+        Object.keys(this.colors).forEach((colorKey, colorKeyIndex) => {
+
+            var mappedStyle = ThemeMap.map(colorKey, this.colors[colorKey].hexColor);
+            this.theme(mappedStyle, colorKey);
+        });
+    }
+    if (this.subviews !== undefined) {
+
+        this.subviews.forEach((sv, svIndex) => {
+
+            sv.template();
+        });
+    }
+}
+
 var template = new Template(templatePath);
 var inputPath = template.inputPath;
 var outputPath = template.outputPath;
@@ -201,8 +280,9 @@ if (xibs !== undefined) {
                     var viewInstance = mod_nibs.viewInstance(objectKey, xibObjects[objectKey][0], xibFile);
                     if (viewInstance !== undefined) {
 
-                        viewInstance.theme("primary", [ "backgroundColor", "textColor" ]);
+                        viewInstance.template();
                         template.applyTheme(xibInstance, viewInstance);
+                        console.log("themed " + viewInstance.viewType);
                     }
                 });
             }

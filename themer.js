@@ -298,7 +298,7 @@ class ThemeMap {
 var themeTemplate = new Template();
 var dir = new mod_dir.Directory(input);
 var path = mod_dir.FilePath.specialPath("$DOCUMENTS/SS/Theming/Extracts/colors.plist");
-var templates = dir.filesWithExtension("template");
+var templates = dir.filesWithExtension(".template");
 var colorPlist = undefined;
 var unknownColors = new Object();
 
