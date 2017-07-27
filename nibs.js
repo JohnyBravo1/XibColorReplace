@@ -2,6 +2,7 @@ var mod_dir = require('./../dir');
 var mod_fs = require('fs');
 var mod_hexRGB = require('hex-rgb');
 var mod_plist = require('plist');
+var mod_xml2js = require('xml2js');
 var mod_utils = require('./utils.js');
 
 var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexBackgroundColor', 
@@ -29,7 +30,22 @@ class UIView {
         if (xibObject === undefined) {
             return;
         }
+        this.willParseView(xibObject, viewKey);
         this.parseView(xibObject, viewKey);
+        this.didParseView(xibObject, viewKey);
+    }
+
+    didParseView(xibObject, viewKey) {
+
+        if (xibObject.userDefinedRuntimeAttributes !== undefined) {
+
+            this.userDefinedRuntimeAttributes = xibObject.userDefinedRuntimeAttributes;
+        }
+    }
+
+    willParseView(xibObject, viewKey) {
+
+
     }
 
     willCommit(xibInstance) {  }
@@ -306,7 +322,6 @@ class UIView {
         this.xmlPath = "document.objects.0." + this.viewKeyString() + ".0";
 
         if (xibObject.color !== undefined) {
-
 
             xibObject.color.forEach((color, colorIndex) =>  {
 
@@ -694,6 +709,8 @@ class UIView {
 
     theme(themeStyle, colorKeys) {
 
+        backgroundViews = [ "UICollectionView", "UICollectionViewCell", "UIImageView", "UIScrollView", "UITableView", "UITableViewCell", "UITextView", "UIView" ];
+        tintViews = [ "UIButton", "UIImageView" ];
         colorKeys = (colorKeys === undefined ? [ "backgroundColor", "textColor", "tintColor" ] : colorKeys);
         colorKeys = (colorKeys instanceof Array ? colorKeys : [ colorKeys ]);
 
@@ -706,7 +723,7 @@ class UIView {
         colorKeys.forEach((colorKey, colorKeyIndex) => {
             
             if (!this.canInsertColorKey(colorKey, true)) return;
-            if (colorKey == "backgroundColor" && [ "UICollectionView", "UICollectionViewCell", "UIImageView", "UIScrollView", "UITableView", "UITableViewCell", "UITextView", "UIView" ].indexOf(this.viewType) === -1) return;
+            if (colorKey == "backgroundColor" && backgroundViews.indexOf(this.viewType) === -1) return;
 
             attribs.userDefinedRuntimeAttribute.forEach((attrib, attribIndex) => {
 
@@ -736,6 +753,48 @@ class UIView {
                 subview.theme(themeStyle, colorKeys);
             });
         }
+    }
+
+    commit(xibInstance, outputPath) {
+
+        if (!this.hasChanges()) return;
+
+        this.willCommit(xibInstance);
+        
+        if (this.replaced !== undefined) {
+
+            this.replaced.forEach((replacement, replacementIndex) => {
+
+                var replacementKeys = Object.keys(replacement);
+
+                replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
+                    this.replaceXibColors(xibInstance, replacement);
+                });
+            });
+        }
+        if (this.subviews !== undefined) {
+
+            this.subviews.forEach((subview, subviewIndex) => {
+                subview.commit(xibInstance);
+            });
+        }
+        //only write changes made from the parent view instance
+        if (this.xmlPath.indexOf("subview") === -1) {
+            
+            var outputPathStat = mod_fs.statSync(outputPath);
+
+            if (outputPathStat.isDirectory()) outputPath += "/" + this.xibName;
+
+            var builder = new mod_xml2js.Builder();
+            var xml = builder.buildObject(xibInstance).toString();
+
+            mod_fs.writeFile(outputPath, xml, (err) => {
+
+                if (err !== null) console.log(err);
+            });
+        }
+
+        return (xibInstance);
     }
 }
 

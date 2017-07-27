@@ -5,6 +5,7 @@ var mod_plist = require('plist');
 var mod_xml2js = require('xml2js');
 
 /**
+ * BRIEF, DEBRIEF
  * MAPS COLORS USED WITHIN REPLACE TEMPLATES INTO THEME STYLE COLORS
  */
 

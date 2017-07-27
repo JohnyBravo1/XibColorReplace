@@ -1,4 +1,4 @@
-var fs = require('fs');
+var mod_fs = require('fs');
 
 class FilePath {
 
@@ -72,7 +72,12 @@ class Directory {
         this.name = FilePath.lastPathComponent(path);
         this.path = path;
 
-        this.populatePaths();
+        if (this.path.indexOf("$") != -1) {
+
+            this.path = FilePath.specialPath(this.path);
+        }
+
+        if (this.exists()) this.populatePaths();
     }
 
     static directories(path) {
@@ -80,19 +85,22 @@ class Directory {
         return (new Directory(path));
     }
 
+    exists() {
+
+        if (mod_fs.existsSync(this.path))
+            return (mod_fs.statSync(this.path).isDirectory());
+
+        return (false);
+    }
+
     populatePaths() {
 
-        if (this.path.indexOf("$") != -1) {
-
-            this.path = FilePath.specialPath(this.path);
-        }
-
-        var files = fs.readdirSync(this.path);
+        var files = mod_fs.readdirSync(this.path);
         var instance = this;
 
         files.forEach(function(file, index) {
 
-            var stat = fs.statSync(instance.path + "/" + file);
+            var stat = mod_fs.statSync(instance.path + "/" + file);
             if (stat.isDirectory()) {
 
                 instance.directories = (instance.directories === undefined ? new Array() : instance.directories);
@@ -165,6 +173,11 @@ class Directory {
         }
 
         return (results);
+    }
+
+    mkdir() {
+        
+        return (mod_fs.mkdirSync(this.path));
     }
 }
 

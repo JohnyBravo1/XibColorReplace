@@ -199,50 +199,6 @@ if (replaceColorWithValue === undefined) {
     replaceColorValue = undefined;
 }
 
-function commit(xibInstance, outputPath) {
-
-    if (!this.hasChanges()) return;
-
-    this.willCommit(xibInstance);
-    
-    if (this.replaced !== undefined) {
-
-        this.replaced.forEach((replacement, replacementIndex) => {
-
-            var replacementKeys = Object.keys(replacement);
-
-            replacementKeys.forEach((replacementKey, replacementKeyIndex) => {
-                this.replaceXibColors(xibInstance, replacement);
-            });
-        });
-    }
-    if (this.subviews !== undefined) {
-
-        this.subviews.forEach((subview, subviewIndex) => {
-            subview.commit(xibInstance, outputPath);
-        });
-    }
-    //only write changes made from the parent view instance
-    if (this.xmlPath.indexOf("subview") === -1) {
-        
-        var outputPathStat = mod_fs.statSync(outputPath);
-
-        if (outputPathStat.isDirectory()) outputPath += "/" + this.xibName;
-
-        var builder = new mod_xml2js.Builder();
-        var xml = builder.buildObject(xibInstance).toString();
-
-        mod_fs.writeFile(outputPath, xml, (err) => {
-
-            if (err !== null) console.log(err);
-        });
-    }
-
-    return (xibInstance);
-}
-
-mod_nibs.UIView.prototype.commit = commit;
-
 function printUsage() {
 
     console.log("usage: ColorReplace [workingPath] [template|outputPath] [template|replaceColorKey|replaceColorValue|replaceColorWithValue]");

@@ -143,7 +143,6 @@ class Template {
         viewInstance.commit(xibInstance, this.outputPath);
     }
 
-
     applyTheme(xibInstance, viewInstance) {
 
         var xibView = viewInstance.viewFromXibInstance(xibInstance);
@@ -254,6 +253,13 @@ mod_nibs.UIView.prototype.template = function() {
 var template = new Template(templatePath);
 var inputPath = template.inputPath;
 var outputPath = template.outputPath;
+
+inputPath = (inputPath === undefined ? mod_args.args.argument(1, undefined) : inputPath);
+if (inputPath === undefined) {
+
+    console.log("NO INPUT PATH SPECIFIED");
+    process.exit(0);
+}
 
 var dir = new mod_dir.Directory(inputPath);
 var xibs = dir.filesWithExtension(".xib", true);
