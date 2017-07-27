@@ -35,6 +35,23 @@ class UIView {
         this.didParseView(xibObject, viewKey);
     }
 
+    //[ { '$': { key: 'frame', x: '10', y: '35', width: '125', height: '21' } } ]
+    parseRect(xibObject) {
+
+        if (xibObject.rect !== undefined) {
+
+            var rect = xibObject.rect[0]['$'];
+            this.rect = {
+
+                "key": rect.key,
+                "x": rect.x,
+                "y": rect.y,
+                "w": rect.width,
+                "h": rect.height
+            };
+        }
+    }
+
     didParseView(xibObject, viewKey) {
 
         if (xibObject.userDefinedRuntimeAttributes !== undefined) {
@@ -45,7 +62,7 @@ class UIView {
 
     willParseView(xibObject, viewKey) {
 
-
+        this.parseRect(xibObject);
     }
 
     willCommit(xibInstance) {  }
