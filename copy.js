@@ -7,11 +7,13 @@ var mod_xml2js = require('xml2js');
 
 var source = mod_args.args.argument(0);
 var target = mod_args.args.argument(1);
+var output = mod_args.args.argument(2, target);
 
 function printUsage() {
 
-    console.log("copies all userDefinedAttributes from source to matching view(s) in target using their rects");
-    console.log("copy [source] [target]");
+    console.log("copies all userDefinedAttributes from source to matching view(s) in target using their rects.");
+    console.log("warning: overwrites the target file if no output file is specified");
+    console.log("copy [source] [target] {output - defaults to target}");
     process.exit(0);
 }
 
@@ -20,12 +22,9 @@ if (source === undefined || target === undefined) {
     printUsage();
 }
 
-var sourceXML = mod_fs.readFileSync(source);
-var targetXML = mod_fs.readFileSync(target);
-var sourceXibInstance = undefined;
-var targetXibInstance = undefined;
-
 function rectEquals(aRect, bRect) {
+
+    if (aRect === undefined || bRect === undefined) return (false);
 
     var xCheck = (aRect.x-0 == bRect.x-0);
     var yCheck = (aRect.y-0 == bRect.y-0);
@@ -37,18 +36,18 @@ function rectEquals(aRect, bRect) {
 
 function copyUserAttribs(targetView) {
 
-    if (rectEquals(this.rect, targetView.rect)) {
+    if (this.userDefinedRuntimeAttributes !== undefined) {
 
-        if (this.userDefinedRuntimeAttributes !== undefined) {
-
-            targetView.userDefinedRuntimeAttributes = new Object();
-            targetView.userDefinedRuntimeAttributes = Object.assign(targetView.userDefinedRuntimeAttributes, this.userDefinedRuntimeAttributes);
-        }
+        targetView.userDefinedRuntimeAttributes = new Object();
+        targetView.userDefinedRuntimeAttributes = Object.assign(targetView.userDefinedRuntimeAttributes, this.userDefinedRuntimeAttributes);
     }
     if (this.subviews !== undefined) {
 
         this.subviews.forEach((sv, svIndex) => {
 
+            if (targetView.subviews[svIndex] === undefined) {
+                return;
+            }
             targetView.subviews[svIndex] = sv.copyUserAttribs(targetView.subviews[svIndex]);
         });
     }
@@ -75,35 +74,66 @@ function populateUserAttributes(xibInstance) {
     return (xibInstance);
 }
 
-mod_nibs.UIView.prototype.copyUserAttribs = copyUserAttribs;
-mod_nibs.UIView.prototype.populateUserAttributes = populateUserAttributes;
-mod_nibs.UIView.prototype.hasChanges = () => { return (true); };
+function copy(sourceXibPath, targetXibPath, outputXibPath) {
 
-mod_xml2js.parseString(sourceXML, (err, result) => {
-    if (err == null) sourceXibInstance = result;
-});
-mod_xml2js.parseString(targetXML, (err, result) => {
-    if (err == null) targetXibInstance = result;
-});
+    console.log(mod_dir.FilePath.lastPathComponent(sourceXibPath) + " => " + mod_dir.FilePath.lastPathComponent(targetXibPath));
 
-if (sourceXibInstance !== undefined && targetXibInstance !== undefined) {
+    var sourceXML = mod_fs.readFileSync(sourceXibPath);
+    var targetXML = mod_fs.readFileSync(targetXibPath);
+    var sourceXibInstance = undefined;
+    var targetXibInstance = undefined;
 
-    var srcObjcs = sourceXibInstance.document.objects[0];
-    var targetObjcs = targetXibInstance.document.objects[0];
+    mod_nibs.UIView.prototype.copyUserAttribs = copyUserAttribs;
+    mod_nibs.UIView.prototype.populateUserAttributes = populateUserAttributes;
+    mod_nibs.UIView.prototype.hasChanges = () => { return (true); };
 
-    var srcKeys = Object.keys(srcObjcs);
-    var targetKeys = Object.keys(targetObjcs);
-
-    srcKeys.forEach((srcKey, srcKeyIndex) => {
-
-        var sourceView = mod_nibs.viewInstance(srcKey, srcObjcs[srcKey][0], source);
-        var targetView = mod_nibs.viewInstance(srcKey, targetObjcs[srcKey][0], target);
-        if (sourceView !== undefined && targetView !== undefined) {
-
-            targetView = sourceView.copyUserAttribs(targetView);
-            targetView.populateUserAttributes(targetXibInstance);
-
-            targetView.commit(targetXibInstance, "/Users/Johan/Desktop/SSTennisEventCell.xib");
-        }
+    mod_xml2js.parseString(sourceXML, (err, result) => {
+        if (err == null) sourceXibInstance = result;
     });
+    mod_xml2js.parseString(targetXML, (err, result) => {
+        if (err == null) targetXibInstance = result;
+    });
+
+    if (sourceXibInstance !== undefined && targetXibInstance !== undefined) {
+
+        if (sourceXibInstance.document === undefined) return;
+
+        var srcObjcs = sourceXibInstance.document.objects[0];
+        var targetObjcs = targetXibInstance.document.objects[0];
+
+        var srcKeys = Object.keys(srcObjcs);
+        var targetKeys = Object.keys(targetObjcs);
+
+        srcKeys.forEach((srcKey, srcKeyIndex) => {
+
+            var sourceView = mod_nibs.viewInstance(srcKey, srcObjcs[srcKey][0], source);
+            var targetView = mod_nibs.viewInstance(srcKey, targetObjcs[srcKey][0], target);
+            if (sourceView !== undefined && targetView !== undefined) {
+
+                targetView = sourceView.copyUserAttribs(targetView);
+                targetView.populateUserAttributes(targetXibInstance);
+
+                targetView.commit(targetXibInstance, outputXibPath);
+            }
+        });
+    }
+}
+
+if (mod_dir.isDirectory(source)) {
+
+    var outputDir = new mod_dir.Directory(output);
+    var srcDir = new mod_dir.Directory(source);
+    var targetDir = new mod_dir.Directory(target);
+    var xibs = srcDir.filesWithExtension(".xib");
+
+    xibs.forEach((xib, xibIndex) => {
+
+        var xibFile = mod_dir.FilePath.lastPathComponent(xib);
+
+        copy(xib, targetDir.filePath(xibFile), outputDir.filePath(xibFile));
+    });
+}
+else {
+
+    copy(source, target, output);
 }

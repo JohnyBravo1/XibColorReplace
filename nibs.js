@@ -1370,6 +1370,8 @@ class UINavigationBar extends UIView {
 
     willCommit(xibInstance) {
 
+        if (this.replaced === undefined) return;
+
         this.replaced.forEach((replacement, replacementIndex) => {
             this.replaceXibColors(xibInstance, replacement);
         });
@@ -1788,6 +1790,8 @@ class UIToolbar extends UIView {
     }
 
     willCommit(xibInstance) {
+
+        if (this.replaced === undefined) return;
 
         this.replaced.forEach((replacement, replacementIndex) => {
             this.replaceXibColors(xibInstance, replacement);

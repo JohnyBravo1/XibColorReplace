@@ -77,21 +77,16 @@ class Directory {
             this.path = FilePath.specialPath(this.path);
         }
 
-        if (this.exists()) this.populatePaths();
+        if (Directory.exists(path)) this.populatePaths();
     }
 
-    static directories(path) {
-
-        return (new Directory(path));
-    }
-
-    exists() {
-
-        if (mod_fs.existsSync(this.path))
-            return (mod_fs.statSync(this.path).isDirectory());
-
-        return (false);
-    }
+    static isDirectory(path) { return (mod_fs.statSync(path).isDirectory()); }
+    static directories(path) { return (new Directory(path)); }
+    static exists(path) { return (mod_fs.existsSync(path) ? this.isDirectory(path) : false); }
+    filePath(file) { return (this.path + "/" + file); }
+    isDirectory() { return (Directory.isDirectory(this.path)); }
+    exists() { return (Directory.exists(this.path)); }
+    mkdir() { return (mod_fs.mkdirSync(this.path)); }
 
     populatePaths() {
 
@@ -174,17 +169,14 @@ class Directory {
 
         return (results);
     }
-
-    mkdir() {
-        
-        return (mod_fs.mkdirSync(this.path));
-    }
 }
 
 module.exports = {
 
     Directory: Directory,
     dir: Directory.directories,
+    exists: Directory.exists,
+    isDirectory: Directory.isDirectory,
 
     FilePath: FilePath,
     lastPathComponent: FilePath.lastPathComponent
