@@ -261,7 +261,6 @@ xibFiles.forEach((xibFile, xibFileIndex) => {
 
                 if (viewInstance !== undefined) {
 
-                    console.log(xibFile);
                     xibInstance = themeTemplate.replace(viewInstance, xibInstance);
                     viewInstance.commit(xibInstance, themeTemplate.outputPath);
                 }

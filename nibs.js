@@ -56,7 +56,8 @@ class UIView {
 
         if (xibObject.userDefinedRuntimeAttributes !== undefined) {
 
-            this.userDefinedRuntimeAttributes = xibObject.userDefinedRuntimeAttributes;
+            this.userDefinedRuntimeAttributes = new Object();
+            this.userDefinedRuntimeAttributes = Object.assign(this.userDefinedRuntimeAttributes, xibObject.userDefinedRuntimeAttributes[0]);
         }
     }
 
