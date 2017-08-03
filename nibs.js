@@ -66,7 +66,25 @@ class UIView {
         this.parseRect(xibObject);
     }
 
-    willCommit(xibInstance) {  }
+    willCommit(xibInstance) {
+
+        if (this.rect !== undefined) {
+
+            var xibView = this.viewFromXibInstance(xibInstance);
+
+            xibView.rect = new Object();
+            xibView.rect['$'] = { x: this.rect.x,
+                                     y: this.rect.y,
+                                 width: this.rect.width,
+                                height: this.rect.height };
+        }
+        if (this.subviews !== undefined) {
+
+            this.subviews.forEach((sv, svIndex) => {
+                sv.willCommit(xibInstance);
+            });
+        }
+    }
 
     hasChanges() {
 
@@ -727,10 +745,10 @@ class UIView {
 
     theme(themeStyle, colorKeys) {
 
-        backgroundViews = [ "UICollectionView", "UICollectionViewCell", "UIImageView", "UIScrollView", "UITableView", "UITableViewCell", "UITextView", "UIView" ];
-        tintViews = [ "UIButton", "UIImageView" ];
-        colorKeys = (colorKeys === undefined ? [ "backgroundColor", "textColor", "tintColor" ] : colorKeys);
-        colorKeys = (colorKeys instanceof Array ? colorKeys : [ colorKeys ]);
+        var backgroundViews = [ "UICollectionView", "UICollectionViewCell", "UIImageView", "UIScrollView", "UITableView", "UITableViewCell", "UITextView", "UIView" ];
+        var tintViews = [ "UIButton", "UIImageView" ];
+        var colorKeys = (colorKeys === undefined ? [ "backgroundColor", "textColor", "tintColor" ] : colorKeys);
+        var colorKeys = (colorKeys instanceof Array ? colorKeys : [ colorKeys ]);
 
         if (this.userDefinedRuntimeAttributes === undefined) {
             this.userDefinedRuntimeAttributes = new Array();

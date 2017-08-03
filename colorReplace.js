@@ -1,5 +1,5 @@
 var mod_args = require('./args');
-var mod_dir = require('./../dir');
+var mod_dir = require('./dir');
 var mod_fs = require('fs');
 var mod_hexRGB = require('hex-rgb');
 var mod_nibs = require('./nibs');

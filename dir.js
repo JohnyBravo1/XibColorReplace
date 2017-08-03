@@ -81,10 +81,12 @@ class Directory {
     }
 
     static isDirectory(path) { return (mod_fs.statSync(path).isDirectory()); }
+    static isFile(path) { return (mod_fs.statSync(path).isFile()); }
     static directories(path) { return (new Directory(path)); }
     static exists(path) { return (mod_fs.existsSync(path) ? this.isDirectory(path) : false); }
     filePath(file) { return (this.path + "/" + file); }
     isDirectory() { return (Directory.isDirectory(this.path)); }
+    isFile() { return (Directory.isFile(this.path)); }
     exists() { return (Directory.exists(this.path)); }
     mkdir() { return (mod_fs.mkdirSync(this.path)); }
 
@@ -177,6 +179,7 @@ module.exports = {
     dir: Directory.directories,
     exists: Directory.exists,
     isDirectory: Directory.isDirectory,
+    isFile: Directory.isFile,
 
     FilePath: FilePath,
     lastPathComponent: FilePath.lastPathComponent
