@@ -46,8 +46,8 @@ class UIView {
                 "key": rect.key,
                 "x": rect.x,
                 "y": rect.y,
-                "w": rect.width,
-                "h": rect.height
+                "width": rect.width,
+                "height": rect.height
             };
         }
     }
