@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "iostream": "cpp",
+        "regex": "cpp",
+        "iosfwd": "cpp",
+        "sstream": "cpp",
+        "__config": "cpp"
+    }
+}

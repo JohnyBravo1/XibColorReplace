@@ -1,0 +1,9 @@
+<print>
+	<view type="UIView">
+		<rect height="32" />
+	</view>
+	<view type="UIImageView">
+		<rect height="32" />
+	</view>
+	<path input="$DOCUMENTS/SS/Master/" />
+</print>

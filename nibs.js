@@ -68,22 +68,78 @@ class UIView {
 
     willCommit(xibInstance) {
 
-        if (this.rect !== undefined) {
+        // if (this.rect !== undefined) {
 
-            var xibView = this.viewFromXibInstance(xibInstance);
+        //     var xibView = this.viewFromXibInstance(xibInstance);
 
-            xibView.rect = new Object();
-            xibView.rect['$'] = { x: this.rect.x,
-                                     y: this.rect.y,
-                                 width: this.rect.width,
-                                height: this.rect.height };
-        }
+        //     xibView.rect = new Object();
+        //     xibView.rect['$'] = { x: this.rect.x,
+        //                              y: this.rect.y,
+        //                          width: this.rect.width,
+        //                         height: this.rect.height };
+        // }
+        // if (this.subviews !== undefined) {
+
+        //     this.subviews.forEach((sv, svIndex) => {
+        //         sv.willCommit(xibInstance);
+        //     });
+        // }
+    }
+
+    findFaultyConstraints(xibInstance) {
+
+        var xibView = this.viewFromXibInstance(xibInstance);
+        var results = new Array();
+        var resultsLength = results.length;
+
         if (this.subviews !== undefined) {
 
             this.subviews.forEach((sv, svIndex) => {
-                sv.willCommit(xibInstance);
+
+                results = sv.findFaultyConstraints(xibInstance);
+                resultsLength = results.length;
             });
         }
+        if (xibView.constraints !== undefined) {
+
+            xibView.constraints[0].constraint.forEach((constraint, constraintIndex) => {
+
+                if (constraint.userDefinedRuntimeAttributes !== undefined) {
+
+                    results[resultsLength++] = this.xmlPath;
+                }
+            });
+        }
+
+        return (results);
+    }
+
+    findUDAttribute(userAttributeKey, xibInstance) {
+
+        var xibView = this.viewFromXibInstance(xibInstance);
+        var results = new Array();
+        var resultsLength = results.length;
+        if (this.subviews !== undefined) {
+
+            this.subviews.forEach((sv, svIndex) => {
+
+                results = sv.findUDAttribute(userAttributeKey, xibInstance);
+                resultsLength = results.length;
+            });
+        }
+        if (xibView.userDefinedRuntimeAttributes !== undefined) {
+
+            xibView.userDefinedRuntimeAttributes[0].userDefinedRuntimeAttribute.forEach((attrib, attribIndex) => {
+
+                if (attrib['$'].keyPath.toLowerCase() == userAttributeKey.toLowerCase()) {
+
+                    console.log(this.xmlPath);
+                    results[resultsLength++] = this.xmlPath;
+                }
+            });
+        }
+
+        return (results);
     }
 
     hasChanges() {
