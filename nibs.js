@@ -1287,6 +1287,8 @@ class UIImageView extends UIView {
         this.className = (xibObject['$']['customClass'] == undefined ? "UIImageView" : xibObject['$']['customClass']);
         this.viewKey = "imageView";
         this.viewType = "UIImageView";
+
+        if (xibObject['$']['image'] !== undefined) this.image = xibObject['$']['image'];
     }
 
     viewKeyString() { return "imageView"; }

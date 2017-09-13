@@ -38,7 +38,7 @@ function toDec(hex) {
     var charVal;
     var n = 0;
     var shift = 0;
-    while(charIndex-- > 0) {
+    while (charIndex-- > 0) {
 
         charVal = fromChar(hex.substring(charIndex, charIndex + 1));
         n += charVal << shift;
@@ -62,8 +62,20 @@ function toChar(n) {
     return (alpha.charAt(n));
 }
 
+// TODO: multi dimensions.
+function merge(a, b) {
+
+    var c = new Array();
+    c = Object.assign(c, a);
+
+    for (var k = 0; k < b.length; k++) c[c.length] = b[k];
+
+    return (c);
+}
+
 module.exports = {
 
     toDec: toDec,
-    toHex: toHex
+    toHex: toHex,
+    merge: merge
 }

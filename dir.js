@@ -44,19 +44,17 @@ class FilePath {
 
         var specialFolder = FilePath.firstPathComponent(path);
         if (specialFolder === undefined) {
-            
+
             return (path);
         }
         specialFolder = specialFolder.toLowerCase();
         if (specialFolder == "$desktop") {
 
             path = process.env['HOME'] + "/Desktop" + path.substring(specialFolder.length, path.length);
-        }
-        else if (specialFolder == "$documents") {
+        } else if (specialFolder == "$documents") {
 
             path = process.env['HOME'] + "/Documents" + path.substring(specialFolder.length, path.length);
-        }
-        else if (specialFolder == "$home") {
+        } else if (specialFolder == "$home") {
 
             path = process.env['HOME'] + path.substring(specialFolder.length, path.length);
         }
@@ -73,15 +71,14 @@ class Directory {
         this.path = path;
 
         if (this.path.indexOf("$") != -1) {
-
             this.path = FilePath.specialPath(this.path);
         }
 
-        if (Directory.exists(path)) this.populatePaths();
+        if (Directory.exists(this.path)) this.populatePaths();
     }
 
-    static isDirectory(path) { return (mod_fs.statSync(path).isDirectory()); }
-    static isFile(path) { return (mod_fs.statSync(path).isFile()); }
+    static isDirectory(path) { return (mod_fs.existsSync(path) && mod_fs.statSync(path).isDirectory()); }
+    static isFile(path) { return (mod_fs.existsSync(path) && mod_fs.statSync(path).isFile()); }
     static directories(path) { return (new Directory(path)); }
     static exists(path) { return (mod_fs.existsSync(path) ? this.isDirectory(path) : false); }
     filePath(file) { return (this.path + "/" + file); }
@@ -104,8 +101,7 @@ class Directory {
 
                 var instanceDir = new Directory(instance.path + "/" + file);
                 instance.directories[instance.directories.length] = instanceDir;
-            }
-            else {
+            } else {
 
                 instance.files = (instance.files === undefined ? new Array() : instance.files);
                 instance.files[instance.files.length] = file;
@@ -123,7 +119,7 @@ class Directory {
 
             var i = indent;
             var logString = "";
-            while(i-- > 0) {
+            while (i-- > 0) {
                 logString += "\t";
             }
             directory.listDirectories(++indent);

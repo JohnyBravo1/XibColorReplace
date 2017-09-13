@@ -10,7 +10,7 @@ function removeImageBackgroundAttributes() {
 
     if (this.viewType == "UIImageView") {
 
-        if (this.userDefinedRuntimeAttributes !== undefined) {
+        if (this.userDefinedRuntimeAttributes !== undefined && this.userDefinedRuntimeAttributes.userDefinedRuntimeAttribute !== undefined) {
 
             this.userDefinedRuntimeAttributes.userDefinedRuntimeAttribute.forEach((attrib, attribIndex) => {
 
@@ -57,18 +57,14 @@ xibFiles.forEach((xibFile, xibFileIndex) => {
     mod_xml2js.parseString(xibString, (err, xibInstance) => {
 
         if (xibInstance.document === undefined) {
-
             return;
         }
         var objcs = xibInstance.document.objects[0];
         var objKeys = Object.keys(objcs);
 
         objKeys.forEach((objKey, objKeyIndex) => {
-
             var viewInstance = mod_nibs.viewInstance(objKey, objcs[objKey][0], xibFile);
-
             if (viewInstance !== undefined) {
-
                 viewInstance.removeImageBackgroundAttributes();
                 viewInstance.commit(xibInstance, xibFile);
             }
