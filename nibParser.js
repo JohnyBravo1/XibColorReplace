@@ -1,6 +1,6 @@
-var mod_dir = require('./../dir.js');
+var mod_dir = require('./dir');
 var mod_fs = require('fs');
-var mod_nibs = require('./nibs.js');
+var mod_nibs = require('./nibs');
 var mod_xml2js = require('xml2js');
 
 var unknownElementTypes = [ 'placeholder', 'screenEdgePanGestureRecognizer', 'tapGestureRecognizer', 'swipeGestureRecognizer' ];

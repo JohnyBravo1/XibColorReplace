@@ -1,4 +1,4 @@
-var mod_dir = require('./../dir');
+var mod_dir = require('./dir');
 var mod_fs = require('fs');
 var mod_hexRGB = require('hex-rgb');
 var mod_plist = require('plist');
@@ -11,7 +11,7 @@ var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackground
 var mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
                     'datePicker', 'imageView', 'label', 'navigationBar', 'navigationItem', 'pickerView', 'scrollView', 'searchBar', 
                     'segmentedControl', 'stepper', 'switch', 'tabBar', 'tabBarItem', 'tableView', 'tableViewCell', 'textField', 'textView', 
-                    'toolbar', 'view' ];
+                    'toolbar', 'view', 'navigationController', 'viewController' ];
 var mod_viewTypes = [ "UIActivityIndicatorView", "UIBarButtonItem", "UIButton", "UICollectionView", "UICollectionViewCell", "UIDatePicker", 
                     "UIImageView", "UILabel", "UINavigationBar", "UINavigationItem", "UIPickerView", "UIScrollView", "UISearchBar", 
                     "UISegmentedControl", "UIStepper", "UISwitch", "UITabBar", "UITabBarItem", "UITableView", "UITableViewCell", "UITextField", 
@@ -1493,10 +1493,14 @@ class UINavigationItem extends UIView {
         this.viewType = "UINavigationItem";
 
         this.barButtonItems = new Array();
-        xibObject.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
 
-            this.barButtonItems[this.barButtonItems.length] = new UIBarButtonItem(barButtonItem);
-        });
+        if (xibObject.barButtonItem !== undefined) {
+
+            xibObject.barButtonItem.forEach((barButtonItem, barButtonItemIndex) => {
+    
+                this.barButtonItems[this.barButtonItems.length] = new UIBarButtonItem(barButtonItem);
+            });
+        }
     }
 
     hasChanges() {
@@ -1988,6 +1992,14 @@ function viewInstance(xibKey, xibInstance, xibFile) {
 
         viewInstance = new UIView(xibInstance);
     }
+    if (xibKey == "navigationController") {
+
+        viewInstance = new UINavigationController(xibInstance);
+    }
+    if (xibKey == "viewController") {
+
+        viewInstance = new UIViewController(xibInstance);
+    }
 
     if (viewInstance !== undefined) {
 
@@ -2023,6 +2035,50 @@ function constructSubviewPaths(view, parentXMLPath) {
     return (view);
 }
 
+class UIViewController {
+
+    constructor(xibInstance) {
+
+        this.parseControls(xibInstance);
+    }
+
+    parseControls(xibInstance) {
+
+        var meta = xibInstance['$'];
+
+        this.sceneMemberId = meta['sceneMemberID'];
+        this.storyboardIdentifier = meta['storyboardIdentifier'];
+
+        var keys = Object.keys(xibInstance);
+
+        keys.forEach((key, keyIndex) => {
+
+            var viewXML = xibInstance[key];
+
+            if (viewXML instanceof Array) {
+
+                viewXML = viewXML[0];
+            }
+            var view = viewInstance(key, viewXML, "");
+
+            if (view !== undefined) {
+
+                this.views = (this.views === undefined ? [] : this.views);
+
+                this.views[this.views.length] = view;
+            }
+        });
+    }
+}
+
+class UINavigationController extends UIViewController {
+
+    constructor(xibInstance) {
+
+        super(xibInstance);
+    }
+}
+
 module.exports = {
 
     UIActivityIndicatorView: UIActivityIndicatorView,
@@ -2049,6 +2105,9 @@ module.exports = {
     UITextView: UITextView,
     UIToolbar: UIToolbar,
     UIView: UIView,
+
+    UINavigationController: UINavigationController,
+    UIViewController: UIViewController,
 
     viewInstance: viewInstance,
 
