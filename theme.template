@@ -1,0 +1,13 @@
+<replacement>
+
+	<input>./Storyboards/Main.storyboard</input>
+	<output>./output</output>
+	
+    <UITableView>
+        <backgroundColor>primary</backgroundColor>
+    </UITableView>
+    <UITableViewCell>
+        <backgroundColor>secondary</backgroundColor>
+    </UITableViewCell>
+	
+</replacement>

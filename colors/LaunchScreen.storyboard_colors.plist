@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>className</key>
+    <string>UIView</string>
+    <key>viewType</key>
+    <string>UIView</string>
+    <key>colors</key>
+    <dict>
+      <key>backgroundColor</key>
+      <dict>
+        <key>rgba</key>
+        <dict>
+          <key>r</key>
+          <string>1</string>
+          <key>g</key>
+          <string>1</string>
+          <key>b</key>
+          <string>1</string>
+          <key>a</key>
+          <string>1</string>
+          <key>w</key>
+          <integer>0</integer>
+        </dict>
+        <key>hexColor</key>
+        <string>#FFFFFF</string>
+      </dict>
+    </dict>
+    <key>subviews</key>
+    <array>
+      <dict>
+        <key>className</key>
+        <string>UIImageView</string>
+        <key>viewType</key>
+        <string>UIImageView</string>
+      </dict>
+      <dict>
+        <key>className</key>
+        <string>UIImageView</string>
+        <key>viewType</key>
+        <string>UIImageView</string>
+      </dict>
+    </array>
+  </dict>
+</plist>

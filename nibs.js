@@ -1,21 +1,214 @@
-var mod_dir = require('./../dir');
-var mod_fs = require('fs');
-var mod_hexRGB = require('hex-rgb');
-var mod_plist = require('plist');
-var mod_xml2js = require('xml2js');
-var mod_utils = require('./utils.js');
+const _ = require('./logger');
+const mod_dir = require('./dir');
+const mod_fs = require('fs');
+const mod_hexRGB = require('hex-rgb');
+const mod_plist = require('plist');
+const mod_xml2js = require('xml2js');
+const mod_utils = require('./utils.js');
 
-var mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexBackgroundColor', 
+const mod_colorKeys = [ 'backgroundColor', 'barTintColor', 'sectionIndexBackgroundColor', 'sectionIndexColor', 'sectionIndexBackgroundColor', 
                     'sectionIndexTrackingBackgroundColor', 'separatorColor', 'shadowColor', 'textColor', 'titleColor', 'titleShadowColor', 
                     'tintColor' ];
-var mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
+                    
+const mod_controllerKeys = [ 'collectionViewController', 'navigationController', 'tableViewController', 'viewController' ];
+const mod_controllerTypes = [ 'UICollectionViewController', 'UINavigationController', 'UITableViewController', 'UIViewController' ];
+const mod_viewKeys = [ 'activityIndicatorView', 'barButtonItem', 'button', 'collectionView', 'collectionViewCell', 'collectionReusableView', 
                     'datePicker', 'imageView', 'label', 'navigationBar', 'navigationItem', 'pickerView', 'scrollView', 'searchBar', 
                     'segmentedControl', 'stepper', 'switch', 'tabBar', 'tabBarItem', 'tableView', 'tableViewCell', 'textField', 'textView', 
                     'toolbar', 'view' ];
-var mod_viewTypes = [ "UIActivityIndicatorView", "UIBarButtonItem", "UIButton", "UICollectionView", "UICollectionViewCell", "UIDatePicker", 
+const mod_viewTypes = [ "UIActivityIndicatorView", "UIBarButtonItem", "UIButton", "UICollectionView", "UICollectionViewCell", "UIDatePicker", 
                     "UIImageView", "UILabel", "UINavigationBar", "UINavigationItem", "UIPickerView", "UIScrollView", "UISearchBar", 
                     "UISegmentedControl", "UIStepper", "UISwitch", "UITabBar", "UITabBarItem", "UITableView", "UITableViewCell", "UITextField", 
                     "UITextView", "UIToolbar", "UIView" ];
+
+class UIViewController {
+
+    constructor(xibObject, controllerKey) {
+
+        if (xibObject === undefined) {
+            return;
+        }
+        this.willParseController(xibObject, controllerKey);
+        this.parseController(xibObject, controllerKey);
+        this.didParseController(xibObject, controllerKey);
+    }
+
+    didParseController(xibObject, controllerKey) {
+
+    }
+
+    parseController(xibObject, controllerKey) {
+
+        var controllerKeys = Object.keys(xibObject);
+
+        this.xibName = "UIViewController";
+        this.xmlPath = "document.scenes.0.scene.--scene--.objects.0." + this.controllerKeyString() + ".0";
+
+        var self = this;
+        controllerKeys.forEach((key, keyIndex) => {
+
+            var instance = viewInstance(key, xibObject[key][0], undefined);
+
+            if (instance !== undefined) {
+
+                self.views = (self.views === undefined ? [] : self.views);
+                self.views.push(instance);
+            }
+        });
+    }
+
+    setupXMLPath(sceneIndex) {
+
+        this.xmlPath = this.xmlPath.replace("--scene--", sceneIndex);
+
+        var path = this.xmlPath;
+        this.views.forEach((view, viewIndex) => {
+
+            constructControllerSubviewPaths(view, path);
+        });
+    }
+
+    controllerKeyString() {
+
+        return ("viewController");
+    }
+
+    controllerFromXibInstance(xibInstance) {
+
+        var split = this.xmlPath.split(".");
+        var xibView = xibInstance;
+
+        split.forEach((pathComponent, pathIndex) => {
+
+            if (xibView == undefined || xibView == null) {
+                return;
+            }
+            xibView = xibView[pathComponent];
+        });
+
+        return (xibView);
+    }
+
+    hasChanges() {
+
+        var changes = false;
+
+        for (var k = 0; k < this.views.length; k++) {
+
+            if (this.views[k].hasChanges) {
+
+                changes = true;
+                break;
+            }
+        }
+
+        return (changes);
+    }
+
+    commit(xibInstance, outputPath) {
+
+        if (!this.hasChanges()) return;
+        else _.info("Nothing to commit", "[" + xibInstance + "]");
+
+        this.willCommit(xibInstance);
+
+        //only write changes made from the parent view instance
+        if (this.xmlPath !== undefined) {
+            
+            var outputPathStat = mod_fs.statSync(outputPath);
+
+            if (outputPathStat.isDirectory()) outputPath += "/" + this.xibName;
+
+            var builder = new mod_xml2js.Builder();
+            var xml = builder.buildObject(xibInstance).toString();
+
+            mod_fs.writeFile(outputPath, xml, (err) => {
+
+                if (err !== null) _.error(err);
+                else _.success("Successfully saved to destination", "[" + outputPath + "]");
+            });
+        }
+        else {
+
+            _.warning("undefined xml path", "UIViewController.commit():");
+        }
+
+        return (xibInstance);
+    }
+
+    didCommit() {
+
+    }
+
+    willCommit() {
+
+    }
+
+    theme() {
+
+        if (this.views === undefined) {
+
+            return;
+        }
+
+        this.views.forEach((view, viewIndex) => {
+
+            view.theme("primary", undefined);
+        });
+    }
+
+    willParseController(xibObject, controllerKey) {
+
+        var attribs = xibObject['$'];
+
+        Object.assign(this, attribs);
+    }
+}
+
+class UICollectionViewController extends UIViewController {
+
+    constructor(xibObject, controllerKey) {
+
+        super(xibObject, controllerKey);
+
+        this.xibName = "UICollectionViewController";
+    }
+
+    controllerKeyString() {
+
+        return ("collectionViewController");
+    }
+}
+
+class UINavigationController extends UIViewController {
+
+    constructor(xibObject, controllerKey) {
+
+        super(xibObject, controllerKey);
+
+        this.xibName = "UINavigationController";
+    }
+
+    controllerKeyString() {
+
+        return ("navigationController");
+    }
+}
+
+class UITableViewController extends UIViewController {
+
+    constructor(xibObject, controllerKey) {
+
+        super(xibObject, controllerKey);
+
+        this.xibName = "UITableViewController";
+    }
+
+    controllerKeyString() {
+
+        return ("tableViewController");
+    }
+}
 
 class UIView {
 
@@ -133,7 +326,6 @@ class UIView {
 
                 if (attrib['$'].keyPath.toLowerCase() == userAttributeKey.toLowerCase()) {
 
-                    console.log(this.xmlPath);
                     results[resultsLength++] = this.xmlPath;
                 }
             });
@@ -394,7 +586,7 @@ class UIView {
                 });
             }
 
-            if (!parsed) console.log("===>> UNKNOWN ELEMENT FOUND IN: " + Object.keys(element));
+            if (!parsed) _.warning("unkown element => " + Object.keys(element), "UIView.parseSubviews():");
         }, this);
         this.subviews = subviewInstances;
     }
@@ -518,8 +710,9 @@ class UIView {
         outputFile = newOutputFile;
         var callbackFunc = (err) => {
 
-            if (err == null) console.log("successfully saved file(" + outputFile + ")...");
-            else console.log("failed to save " + outputFile + "with error: " + err);
+            var header = "UIView.outputColor():";
+            if (err == null) _.succes("successfully saved file(" + outputFile + ")...", header);
+            else _.error("saving [" + outputFile + "] failed with error: " + err, header);
         }
         mod_fs.writeFile(outputFile, output, callbackFunc);
     }
@@ -577,7 +770,7 @@ class UIView {
                     if (this.replaced[replaceIndex][colorKey] !== undefined && 
                         (colorValue === undefined || this.replaced[replaceIndex][colorKey].value == colorValue)) {
                         this.replaced[replaceIndex][colorKey].value = replaceValue;
-                        console.log(("replaced a replacement for " + colorKey + " in " + this.viewType).toUpperCase());
+                        _.info("replaced a replacement for " + colorKey + " in " + this.viewType, "UIView.replace():");
                         canReplace = false;
                     }
                 }
@@ -641,7 +834,7 @@ class UIView {
 
                             // delete this.replaced[replacementIndex][colorKey];
 
-                            console.log(("excluded: " + colorKey + " [" + exclude + "] in => " + this.viewType));
+                            _.info("excluded: " + colorKey + " [" + exclude + "] in => " + this.viewType, "UIView.excludeColor():");
                             colorExcluded = true;
                         }
                     });
@@ -661,7 +854,7 @@ class UIView {
 
         if (xibView === undefined) {
 
-            console.log("something wrong for [" + this.xmlPath + "]");
+            _.warning("something wrong for [" + this.xmlPath + "]", "UIView.replaceXibColor():");
             return;
         }
         var rgb = mod_hexRGB(replacement[replacementColorKey].value);
@@ -689,7 +882,7 @@ class UIView {
                     
                     if (this.colors !== undefined) {
 
-                        console.log("replaced " + colorKey + " in " + this.viewType + " from " + this.colors[colorKey].hexColor + " => " + replacement[replacementColorKey].value);
+                        _.info("replaced " + colorKey + " in " + this.viewType + " from " + this.colors[colorKey].hexColor + " => " + replacement[replacementColorKey].value, "UIView.replaceXibColors():");
 
                         this.colors[colorKey].hexColor = replacement[replacementColorKey].value;
                         this.colors[colorKey].rgba.r = r;
@@ -704,7 +897,7 @@ class UIView {
                 createColor = false;
                 xibView = this.removeNilColorKey(xibView, replacementColorKey);
                 xibView.color[xibView.color.length] = this.colorObject(replacementColorKey, rgb);
-                console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
+                _.info("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value, "UIView.replaceXibColors():");
             }
         }
         if (createColor) {
@@ -714,7 +907,7 @@ class UIView {
             xibView.color = new Array();
             xibView.color[0] = this.colorObject(replacementColorKey, rgb);
 
-            console.log("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value);
+            _.info("inserted " + replacementColorKey + " for " + this.viewType + " with: " + rgb + "/" + replacement[replacementColorKey].value, "UIView.replaceXibColors():");
         }
 
         return (xibInstance);
@@ -803,7 +996,7 @@ class UIView {
 
         var backgroundViews = [ "UICollectionView", "UICollectionViewCell", "UIImageView", "UIScrollView", "UITableView", "UITableViewCell", "UITextView", "UIView" ];
         var tintViews = [ "UIButton", "UIImageView" ];
-        var colorKeys = (colorKeys === undefined ? [ "backgroundColor", "textColor", "tintColor" ] : colorKeys);
+        var colorKeys = (colorKeys === undefined ? mod_colorKeys : colorKeys);
         var colorKeys = (colorKeys instanceof Array ? colorKeys : [ colorKeys ]);
 
         if (this.userDefinedRuntimeAttributes === undefined) {
@@ -1680,9 +1873,33 @@ class UITableView extends UIView {
 
     parseTableView(xibObject) {
 
+        if (xibObject.prototypes !== undefined) {
+
+            var prototypes = [];
+            xibObject.prototypes[0].tableViewCell.forEach((cell, cellIndex) => {
+
+                prototypes.push(new UITableViewCell(cell, "tableViewCell"));
+            });
+
+            this.prototypes = prototypes;
+        }
+
         this.className = (xibObject['$']['customClass'] == undefined ? "UITableView" : xibObject['$']['customClass']);
         this.viewKey = "tableView";
         this.viewType = "UITableView";
+    }
+
+    theme(themeStyle, colorKeys) {
+
+        super.theme(themeStyle, colorKeys);
+
+        if (this.prototypes !== undefined) {
+
+            this.prototypes.forEach((cell, cellIndex) => {
+
+                cell.theme(themeStyle, colorKeys);
+            });
+        }
     }
 
     viewKeyString() { return ("tableView"); }
@@ -1756,6 +1973,16 @@ class UITableViewCell extends UIView {
     }
 
     viewKeyString() { return ("tableViewCell.0.tableViewCellContentView"); }
+
+    viewFromXibInstance(xibInstance) {
+
+        var instance = super.viewFromXibInstance(xibInstance);
+        console.log(this.xmlPath);
+        console.log(instance);
+        process.exit(0);
+
+        return (super.viewFromXibInstance(xibInstance));
+    }
 }
 
 class UITextField extends UIView {
@@ -1884,12 +2111,59 @@ class UIToolbar extends UIView {
  * @param xibInstance - xml parsed xib instance
  * @param xibFile - path to the xib file
  */
+function controllerInstance(xibKey, xibInstance, xibFile) {
+
+    var unknownElementTypes = [];
+
+    if (mod_controllerKeys.indexOf(xibKey) === -1 && unknownElementTypes.indexOf(xibKey) === -1) {
+
+        _.warning("UNKNOWN KEY FOR CREATING CONTROLLER INSTANCE", "[" + xibKey + "]");
+        return;
+    }
+
+    var controllerInstance = undefined;
+    xibFile = (xibFile === undefined ? "" : xibFile);
+
+    switch (xibKey) {
+
+        case "collectionViewController": {
+
+            controllerInstance = new UICollectionViewController(xibInstance);
+        } break;
+        case "navigationController": {
+
+            controllerInstance = new UINavigationController(xibInstance);
+        } break;
+        case "tableViewController": {
+
+            controllerInstance = new UITableViewController(xibInstance);
+        } break;
+        case "viewController": {
+
+            controllerInstance = new UIViewController(xibInstance);
+        } break;
+    }
+    if (controllerInstance !== undefined) {
+
+        controllerInstance.xibName = mod_dir.lastPathComponent(xibFile);
+    }
+
+    return (controllerInstance);
+}
+
+/**
+ * returns an instance of a view from the given xibKey
+ * 
+ * @param xibKey - One of activityIndicatorView, collectionViewCell, collectionReusableView, tableView, tableViewCell, toolbar, view
+ * @param xibInstance - xml parsed xib instance
+ * @param xibFile - path to the xib file
+ */
 function viewInstance(xibKey, xibInstance, xibFile) {
 
     var unknownElementTypes = [ 'placeholder', 'screenEdgePanGestureRecognizer', 'tapGestureRecognizer', 'swipeGestureRecognizer' ];
     if (mod_viewKeys.indexOf(xibKey) === -1 && unknownElementTypes.indexOf(xibKey) === -1) {
 
-        console.log("[" + xibKey + "] unknown key for creating view instance: ");
+        _.warning("UNKNOWN KEY FOR CREATING INSTANCE", "[" + xibKey + "]");
         return;
     }
 
@@ -1998,6 +2272,26 @@ function viewInstance(xibKey, xibInstance, xibFile) {
     return (viewInstance);
 }
 
+function constructControllerSubviewPaths(view, parentXMLPath) {
+
+    view.xmlPath = view.xmlPath.replace("document.objects.0", parentXMLPath);
+
+    if (view.subviews !== undefined) {
+
+        view.subviews.forEach((sv, svIndex) => {
+
+            constructControllerSubviewPaths(sv, parentXMLPath);
+        });
+    }
+    if (view.prototypes !== undefined) {
+
+        view.prototypes.forEach((cell, cellIndex) => {
+
+            constructControllerSubviewPaths(cell, parentXMLPath + ".prototypes.0");
+        });
+    }
+}
+
 function constructSubviewPaths(view, parentXMLPath) {
 
     if (view.subviews !== undefined) {
@@ -2050,6 +2344,9 @@ module.exports = {
     UIToolbar: UIToolbar,
     UIView: UIView,
 
+    UIViewController: UIViewController,
+
+    controllerInstance: controllerInstance,
     viewInstance: viewInstance,
 
     colorKeys: mod_colorKeys,

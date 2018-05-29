@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+var commander = require('commander'),
+    colors = require('colors');
+
+commander.
+  version(require('../package').version.green).
+  usage('[color <hex|RGB>]').
+  parse(process.argv);
+
+if (commander.args.length != 1) {
+    commander.help();
+}
+
+require('../index');

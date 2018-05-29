@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>className</key>
+    <string>WPParkingTableHeaderView</string>
+    <key>viewType</key>
+    <string>UIView</string>
+    <key>subviews</key>
+    <array>
+      <dict>
+        <key>className</key>
+        <string>UIImageView</string>
+        <key>viewType</key>
+        <string>UIImageView</string>
+        <key>colors</key>
+        <dict>
+          <key>tintColor</key>
+          <dict>
+            <key>rgba</key>
+            <dict>
+              <key>r</key>
+              <integer>0</integer>
+              <key>g</key>
+              <integer>0</integer>
+              <key>b</key>
+              <integer>0</integer>
+              <key>a</key>
+              <string>1</string>
+              <key>w</key>
+              <string>0.33333333329999998</string>
+            </dict>
+            <key>hexColor</key>
+            <string>#545454</string>
+          </dict>
+        </dict>
+      </dict>
+      <dict>
+        <key>className</key>
+        <string>UILabel</string>
+        <key>viewType</key>
+        <string>UILabel</string>
+      </dict>
+    </array>
+  </dict>
+</plist>
